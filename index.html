@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover">
+<title>目標トラッカー</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div id="app">
+
+  <header class="app-header">
+    <div class="date-nav">
+      <button id="prev-day" class="icon-btn" aria-label="前の日">‹</button>
+      <h1 id="current-date-label">-</h1>
+      <button id="next-day" class="icon-btn" aria-label="次の日">›</button>
+    </div>
+    <button id="today-btn" class="pill-btn">今日</button>
+  </header>
+
+  <div id="date-strip" class="date-strip"></div>
+
+  <nav class="tabs">
+    <button class="tab-btn active" data-tab="today">今日</button>
+    <button class="tab-btn" data-tab="calendar">カレンダー</button>
+    <button class="tab-btn" data-tab="stats">統計</button>
+  </nav>
+
+  <main>
+    <section id="tab-today" class="tab-panel active">
+      <ul id="activity-list" class="activity-list"></ul>
+      <p id="empty-state" class="empty-state" hidden>まだ目標がありません。右下の + から追加しましょう。</p>
+    </section>
+
+    <section id="tab-calendar" class="tab-panel">
+      <div class="calendar-header">
+        <button id="cal-prev" class="icon-btn" aria-label="前の月">‹</button>
+        <h2 id="cal-month-label">-</h2>
+        <button id="cal-next" class="icon-btn" aria-label="次の月">›</button>
+      </div>
+      <div class="calendar-weekdays" id="calendar-weekdays"></div>
+      <div id="calendar-grid" class="calendar-grid"></div>
+      <div id="calendar-day-detail" class="day-detail"></div>
+    </section>
+
+    <section id="tab-stats" class="tab-panel">
+      <ul id="stats-list" class="stats-list"></ul>
+      <p id="stats-empty" class="empty-state" hidden>まだ目標がありません。</p>
+    </section>
+  </main>
+
+  <button id="add-activity-btn" class="fab" aria-label="目標を追加">+</button>
+</div>
+
+<dialog id="add-activity-dialog">
+  <form id="add-activity-form">
+    <h2>新しい目標</h2>
+    <label class="field-label">
+      名前
+      <input type="text" id="activity-name-input" required maxlength="30" placeholder="例: ランニング" autocomplete="off">
+    </label>
+    <p class="field-label">色</p>
+    <div class="color-picker" id="color-picker"></div>
+    <div class="dialog-actions">
+      <button type="button" id="cancel-add-btn" class="btn-secondary">キャンセル</button>
+      <button type="submit" id="confirm-add-btn" class="btn-primary">追加</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog id="activity-detail-dialog">
+  <form method="dialog">
+    <h2 id="detail-activity-name">-</h2>
+    <div class="stat-row">
+      <div class="stat-box">
+        <span class="stat-number" id="detail-current-streak">0</span>
+        <span class="stat-caption">現在の連続日数</span>
+      </div>
+      <div class="stat-box">
+        <span class="stat-number" id="detail-best-streak">0</span>
+        <span class="stat-caption">最長記録</span>
+      </div>
+      <div class="stat-box">
+        <span class="stat-number" id="detail-total-count">0</span>
+        <span class="stat-caption">合計達成日数</span>
+      </div>
+    </div>
+    <p id="detail-last-done" class="detail-last-done"></p>
+    <div class="dialog-actions">
+      <button type="button" id="delete-activity-btn" class="btn-danger">この目標を削除</button>
+      <button type="submit" class="btn-primary">閉じる</button>
+    </div>
+  </form>
+</dialog>
+
+<script src="js/storage.js"></script>
+<script src="js/streaks.js"></script>
+<script src="js/app.js"></script>
+<script src="js/main.js"></script>
+</body>
+</html>
