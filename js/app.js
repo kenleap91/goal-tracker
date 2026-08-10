@@ -57,6 +57,14 @@
       statsList: document.getElementById('stats-list'),
       statsEmpty: document.getElementById('stats-empty'),
 
+      csvExportBtn: document.getElementById('csv-export-btn'),
+      csvExportDialog: document.getElementById('csv-export-dialog'),
+      csvExportForm: document.getElementById('csv-export-form'),
+      csvStartDate: document.getElementById('csv-start-date'),
+      csvEndDate: document.getElementById('csv-end-date'),
+      csvExportError: document.getElementById('csv-export-error'),
+      csvCancelBtn: document.getElementById('csv-cancel-btn'),
+
       addBtn: document.getElementById('add-activity-btn'),
       addDialog: document.getElementById('add-activity-dialog'),
       addForm: document.getElementById('add-activity-form'),
@@ -154,6 +162,17 @@
     this.dom.deleteBtn.addEventListener('click', function () {
       self.handleDeleteActivity();
     });
+
+    this.dom.csvExportBtn.addEventListener('click', function () {
+      self.openCsvDialog();
+    });
+    this.dom.csvCancelBtn.addEventListener('click', function () {
+      self.dom.csvExportDialog.close();
+    });
+    this.dom.csvExportForm.addEventListener('submit', function (e) {
+      e.preventDefault();
+      self.handleCsvExport();
+    });
   };
 
   App.prototype.buildColorPicker = function () {
@@ -226,6 +245,58 @@
     }
   };
 
+  /**
+   * Builds a single activity row (colored pill with a check circle, name,
+   * status text and streak badge) for the given date. Used by both the
+   * Today tab and the calendar's day-detail panel, since "mark this
+   * activity done on this date" is the same interaction in both places.
+   */
+  App.prototype.buildActivityRow = function (activity, dateStr) {
+    var self = this;
+    var dateSet = this.completionSets[activity.id];
+    var isDone = dateSet.has(dateStr);
+    var streak = S.computeCurrentStreak(dateSet, dateStr);
+    var sinceLast = S.daysSinceLastDone(dateSet, dateStr);
+
+    var row = el('li', 'activity-row');
+    row.style.backgroundColor = activity.color;
+
+    var check = el('button', 'check-circle');
+    check.type = 'button';
+    check.setAttribute('aria-label', '達成をマーク');
+    if (isDone) check.classList.add('checked');
+    check.addEventListener('click', function (e) {
+      e.stopPropagation();
+      self.toggleCompletion(activity.id, dateStr);
+    });
+    row.appendChild(check);
+
+    var info = el('div', 'activity-info');
+    info.appendChild(el('span', 'activity-name', activity.name));
+
+    var subtext;
+    if (isDone) {
+      subtext = streak > 1 ? streak + '日連続達成中' : '達成';
+    } else if (sinceLast == null) {
+      subtext = '記録なし';
+    } else {
+      subtext = '最近 ' + sinceLast + '日前';
+    }
+    info.appendChild(el('span', 'activity-sub', subtext));
+    row.appendChild(info);
+
+    if (streak > 0) {
+      row.appendChild(el('span', 'streak-badge', '🔥' + streak));
+    }
+    row.appendChild(el('span', 'chevron', '›'));
+
+    row.addEventListener('click', function () {
+      self.openActivityDetail(activity.id);
+    });
+
+    return row;
+  };
+
   App.prototype.renderTodayTab = function () {
     var self = this;
     var asOf = S.toDateStr(this.selectedDate);
@@ -233,48 +304,7 @@
     this.dom.emptyState.hidden = this.activities.length > 0;
 
     this.activities.forEach(function (activity) {
-      var dateSet = self.completionSets[activity.id];
-      var isDone = dateSet.has(asOf);
-      var streak = S.computeCurrentStreak(dateSet, asOf);
-      var sinceLast = S.daysSinceLastDone(dateSet, asOf);
-
-      var row = el('li', 'activity-row');
-      row.style.backgroundColor = activity.color;
-
-      var check = el('button', 'check-circle');
-      check.type = 'button';
-      check.setAttribute('aria-label', '達成をマーク');
-      if (isDone) check.classList.add('checked');
-      check.addEventListener('click', function (e) {
-        e.stopPropagation();
-        self.toggleCompletion(activity.id, asOf);
-      });
-      row.appendChild(check);
-
-      var info = el('div', 'activity-info');
-      info.appendChild(el('span', 'activity-name', activity.name));
-
-      var subtext;
-      if (isDone) {
-        subtext = streak > 1 ? streak + '日連続達成中' : '達成';
-      } else if (sinceLast == null) {
-        subtext = '記録なし';
-      } else {
-        subtext = '最近 ' + sinceLast + '日前';
-      }
-      info.appendChild(el('span', 'activity-sub', subtext));
-      row.appendChild(info);
-
-      if (streak > 0) {
-        row.appendChild(el('span', 'streak-badge', '🔥' + streak));
-      }
-      row.appendChild(el('span', 'chevron', '›'));
-
-      row.addEventListener('click', function () {
-        self.openActivityDetail(activity.id);
-      });
-
-      self.dom.activityList.appendChild(row);
+      self.dom.activityList.appendChild(self.buildActivityRow(activity, asOf));
     });
   };
 
@@ -345,29 +375,22 @@
     if (!this.selectedCalendarDate) return;
 
     var dateStr = S.toDateStr(this.selectedCalendarDate);
-    var done = this.activities.filter(function (a) { return self.completionSets[a.id].has(dateStr); });
+    var doneCount = this.activities.filter(function (a) { return self.completionSets[a.id].has(dateStr); }).length;
 
     var d = this.selectedCalendarDate;
     var heading = el('h3', 'day-detail-heading',
       d.getFullYear() + '年' + (d.getMonth() + 1) + '月' + d.getDate() + '日');
-    var count = el('span', 'day-detail-count', done.length + ' 件達成');
-    heading.appendChild(count);
+    heading.appendChild(el('span', 'day-detail-count', doneCount + ' 件達成'));
     container.appendChild(heading);
 
-    if (done.length === 0) {
-      container.appendChild(el('p', 'empty-state', 'この日の記録はありません。'));
+    if (this.activities.length === 0) {
+      container.appendChild(el('p', 'empty-state', 'まだ目標がありません。右下の + から追加しましょう。'));
       return;
     }
 
-    var list = el('ul', 'day-detail-list');
-    done.forEach(function (activity) {
-      var item = el('li', 'day-detail-item');
-      var badge = el('span', 'day-detail-check');
-      badge.style.backgroundColor = activity.color;
-      badge.textContent = '✓';
-      item.appendChild(badge);
-      item.appendChild(el('span', null, activity.name));
-      list.appendChild(item);
+    var list = el('ul', 'activity-list');
+    this.activities.forEach(function (activity) {
+      list.appendChild(self.buildActivityRow(activity, dateStr));
     });
     container.appendChild(list);
   };
@@ -482,6 +505,64 @@
       self.dom.detailDialog.close();
       self.render();
     });
+  };
+
+  function csvField(value) {
+    var str = String(value);
+    if (/[",\r\n]/.test(str)) {
+      str = '"' + str.replace(/"/g, '""') + '"';
+    }
+    return str;
+  }
+
+  App.prototype.openCsvDialog = function () {
+    this.dom.csvStartDate.value = S.toDateStr(startOfMonth(new Date()));
+    this.dom.csvEndDate.value = S.toDateStr(new Date());
+    this.dom.csvExportError.hidden = true;
+    this.dom.csvExportDialog.showModal();
+  };
+
+  App.prototype.handleCsvExport = function () {
+    var self = this;
+    var startStr = this.dom.csvStartDate.value;
+    var endStr = this.dom.csvEndDate.value;
+
+    if (!startStr || !endStr || startStr > endStr) {
+      this.dom.csvExportError.textContent = '開始日は終了日より前(または同じ)の日付にしてください。';
+      this.dom.csvExportError.hidden = false;
+      return;
+    }
+
+    var header = ['日付'].concat(this.activities.map(function (a) { return a.name; }));
+    var rows = [header];
+
+    var cursor = S.parseDateStr(startStr);
+    var endDate = S.parseDateStr(endStr);
+    while (cursor <= endDate) {
+      var dateStr = S.toDateStr(cursor);
+      rows.push([dateStr].concat(self.activities.map(function (a) {
+        return self.completionSets[a.id].has(dateStr) ? '1' : '0';
+      })));
+      cursor = S.addDays(cursor, 1);
+    }
+
+    var csv = rows.map(function (row) {
+      return row.map(csvField).join(',');
+    }).join('\r\n');
+
+    // Prefix with a UTF-8 BOM so Excel (including Japanese locales) opens
+    // the file with correct encoding instead of garbled text.
+    var blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' });
+    var url = URL.createObjectURL(blob);
+    var link = document.createElement('a');
+    link.href = url;
+    link.download = 'goal-tracker_' + startStr + '_' + endStr + '.csv';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+
+    this.dom.csvExportDialog.close();
   };
 
   global.GoalTracker = global.GoalTracker || {};

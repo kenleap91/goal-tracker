@@ -44,6 +44,9 @@
     </section>
 
     <section id="tab-stats" class="tab-panel">
+      <div class="stats-header">
+        <button id="csv-export-btn" class="btn-secondary">CSV書き出し</button>
+      </div>
       <ul id="stats-list" class="stats-list"></ul>
       <p id="stats-empty" class="empty-state" hidden>まだ目標がありません。</p>
     </section>
@@ -89,6 +92,25 @@
     <div class="dialog-actions">
       <button type="button" id="delete-activity-btn" class="btn-danger">この目標を削除</button>
       <button type="submit" class="btn-primary">閉じる</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog id="csv-export-dialog">
+  <form id="csv-export-form">
+    <h2>CSV書き出し</h2>
+    <label class="field-label">
+      開始日
+      <input type="date" id="csv-start-date" required>
+    </label>
+    <label class="field-label">
+      終了日
+      <input type="date" id="csv-end-date" required>
+    </label>
+    <p id="csv-export-error" class="detail-last-done" hidden></p>
+    <div class="dialog-actions">
+      <button type="button" id="csv-cancel-btn" class="btn-secondary">キャンセル</button>
+      <button type="submit" class="btn-primary">書き出す</button>
     </div>
   </form>
 </dialog>

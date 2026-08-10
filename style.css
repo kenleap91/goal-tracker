@@ -303,30 +303,8 @@ main {
   color: var(--text-muted);
   font-weight: 400;
 }
-.day-detail-list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-.day-detail-item {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  font-size: 15px;
-}
-.day-detail-check {
-  width: 22px;
-  height: 22px;
-  min-width: 22px;
-  border-radius: 50%;
-  color: #fff;
-  font-size: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+.day-detail .activity-list {
+  margin-top: 4px;
 }
 
 /* Stats */
@@ -427,7 +405,9 @@ dialog h2 {
   color: var(--text-muted);
   margin: 0 0 6px;
 }
-#activity-name-input {
+#activity-name-input,
+#csv-start-date,
+#csv-end-date {
   width: 100%;
   font-size: 16px;
   padding: 10px 12px;
@@ -435,6 +415,12 @@ dialog h2 {
   border: 1px solid var(--border);
   margin-top: 6px;
   margin-bottom: 16px;
+}
+
+.stats-header {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 12px;
 }
 
 .color-picker {
