@@ -423,6 +423,31 @@ dialog h2 {
   margin-bottom: 12px;
 }
 
+.csv-export-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  border-radius: 999px;
+  border: none;
+  background: var(--accent);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 3px 10px rgba(138, 92, 246, 0.35);
+}
+.csv-export-btn:hover {
+  background: #7b46e6;
+}
+.csv-export-btn:active {
+  transform: translateY(1px);
+  box-shadow: 0 1px 4px rgba(138, 92, 246, 0.35);
+}
+.csv-export-icon {
+  font-size: 13px;
+}
+
 .color-picker {
   display: flex;
   flex-wrap: wrap;
