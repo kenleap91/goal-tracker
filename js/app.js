@@ -13,6 +13,8 @@
     '#22c55e', '#3b82f6', '#ec4899', '#6366f1'
   ];
 
+  var DONE_COLOR = '#9a9a9a';
+
   function el(tag, className, text) {
     var node = document.createElement(tag);
     if (className) node.className = className;
@@ -259,7 +261,7 @@
     var sinceLast = S.daysSinceLastDone(dateSet, dateStr);
 
     var row = el('li', 'activity-row');
-    row.style.backgroundColor = activity.color;
+    row.style.backgroundColor = isDone ? DONE_COLOR : activity.color;
 
     var check = el('button', 'check-circle');
     check.type = 'button';

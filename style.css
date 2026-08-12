@@ -162,17 +162,33 @@ main {
   cursor: pointer;
 }
 
+/* The visible ring stays 30px, but the button's own box (its tap target)
+   is enlarged to 44px so accidental taps near the circle hit the check
+   instead of falling through to the row's "open detail" click handler. */
 .check-circle {
-  width: 30px;
-  height: 30px;
-  min-width: 30px;
-  border-radius: 50%;
-  border: 2px solid rgba(255, 255, 255, 0.85);
+  width: 44px;
+  height: 44px;
+  min-width: 44px;
+  margin: -7px;
+  border: none;
   background: transparent;
   cursor: pointer;
   position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  -webkit-tap-highlight-color: transparent;
 }
-.check-circle.checked {
+.check-circle::before {
+  content: "";
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.85);
+  box-sizing: border-box;
+}
+.check-circle.checked::before {
   background: rgba(255, 255, 255, 0.95);
 }
 .check-circle.checked::after {
