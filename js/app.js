@@ -22,6 +22,14 @@
     return node;
   }
 
+  // Short haptic buzz on supported devices (Android Chrome/Firefox).
+  // navigator.vibrate doesn't exist on iOS Safari, so this is a no-op there.
+  function vibrate(pattern) {
+    if (typeof navigator !== 'undefined' && typeof navigator.vibrate === 'function') {
+      navigator.vibrate(pattern);
+    }
+  }
+
   function App(repo) {
     this.repo = repo;
     this.activities = [];
@@ -269,6 +277,8 @@
     if (isDone) check.classList.add('checked');
     check.addEventListener('click', function (e) {
       e.stopPropagation();
+      var willBeDone = !check.classList.contains('checked');
+      vibrate(willBeDone ? [15, 40, 15] : 12);
       self.toggleCompletion(activity.id, dateStr);
     });
     row.appendChild(check);
