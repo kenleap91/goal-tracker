@@ -118,11 +118,10 @@
   };
 
   function createRepository() {
-    // Swap this out for a server-backed implementation later, e.g.:
-    //   return new ServerRepository('/api');
     return new LocalStorageRepository();
   }
 
   global.GoalTracker = global.GoalTracker || {};
   global.GoalTracker.createRepository = createRepository;
+  global.GoalTracker.LocalStorageRepository = LocalStorageRepository;
 })(window);

@@ -20,11 +20,11 @@ python3 -m http.server 8000
 
 ## データの保存場所
 
-現在はブラウザの `localStorage` にデータを保存しています。**同じブラウザ・同じ端末でのみ**データが残り、ブラウザのキャッシュ/データを消去すると失われます。
+Supabase(Postgres + Auth)にデータを保存しています。メールのマジックリンクでログインすると、その端末・ブラウザに関わらずアカウントに紐づいたデータが見られます。ログインしていない状態では使えません。
 
-## サーバーへの移行方法
+データアクセスは Row Level Security (RLS) で自分のデータのみに制限されています。テーブル定義は [`supabase/schema.sql`](supabase/schema.sql) を参照してください。テーブル名は他アプリと同じSupabaseプロジェクトを共有する前提で `goal_tracker_` を接頭辞にしています。
 
-データの読み書きは `js/storage.js` の1ファイルに集約されています。`LocalStorageRepository` が実装している以下のインターフェースを、サーバーAPIを呼ぶ実装(例: `ServerRepository`、内部で `fetch()` を使う)に差し替えれば、UI側 (`js/app.js`) は一切変更せずにサーバー保存へ移行できます。
+`js/storage.js` の `LocalStorageRepository` は、以前ローカルにあったデータを初回ログイン時にSupabaseへ一括インポートするためだけに残しています(`js/main.js` 参照)。データの読み書きの本体は `js/server-repository.js` の `ServerRepository` です。どちらも以下の共通インターフェースを実装しています。
 
 ```
 getActivities(): Promise<Activity[]>
@@ -35,15 +35,17 @@ setCompletion(activityId, dateStr, done): Promise<void>
 toggleCompletion(activityId, dateStr): Promise<boolean>
 ```
 
-移行する際は `js/storage.js` 内の `createRepository()` が返すインスタンスを差し替えるだけです。
-
 ## ファイル構成
 
 ```
-index.html       画面構造
-style.css        スタイル
-js/storage.js    データ保存層(localStorage / 将来のサーバー実装を切り替える場所)
-js/streaks.js    日付・連続日数の計算ロジック(ピュア関数)
-js/app.js        画面描画とイベント処理
-js/main.js       起動処理
+index.html               画面構造(ログイン画面 + アプリ本体)
+style.css                スタイル
+js/supabase-config.js    Supabase プロジェクトURL・公開キー
+js/auth.js               Supabase Auth(マジックリンク)まわり
+js/storage.js            LocalStorageRepository(移行用に残置)
+js/server-repository.js  ServerRepository(Supabase Postgresへの読み書き)
+js/streaks.js            日付・連続日数の計算ロジック(ピュア関数)
+js/app.js                画面描画とイベント処理
+js/main.js               起動処理(認証ゲート・ローカルデータ移行)
+supabase/schema.sql      テーブル定義・RLSポリシー
 ```

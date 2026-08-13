@@ -69,6 +69,49 @@ body {
   cursor: pointer;
 }
 
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* Login screen */
+.auth-screen {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+.auth-card {
+  width: min(360px, 100%);
+  background: var(--card-bg);
+  border-radius: 20px;
+  padding: 28px 24px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.12);
+  text-align: center;
+}
+.auth-card h1 {
+  font-size: 20px;
+  margin: 0 0 6px;
+}
+.auth-sub {
+  font-size: 13px;
+  color: var(--text-muted);
+  margin: 0 0 20px;
+}
+.auth-card .field-label {
+  text-align: left;
+}
+.auth-submit {
+  width: 100%;
+}
+.auth-message {
+  font-size: 13px;
+  color: var(--text-muted);
+  margin: 16px 0 0;
+}
+
 /* Date strip */
 .date-strip {
   display: flex;
