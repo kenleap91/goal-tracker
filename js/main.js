@@ -38,10 +38,17 @@
 
   authCodeForm.addEventListener('submit', function (e) {
     e.preventDefault();
-    var code = authCodeInput.value.trim();
-    if (!code || !pendingEmail) return;
+    var code = authCodeInput.value.replace(/\s+/g, '');
+    var email = pendingEmail || authEmailInput.value.trim();
+    if (!code) return;
+    if (!email) {
+      showMessage('メールアドレスが分からなくなりました。お手数ですが最初からやり直してください。');
+      authForm.hidden = false;
+      authCodeForm.hidden = true;
+      return;
+    }
     authCodeSubmitBtn.disabled = true;
-    G.auth.verifyCode(pendingEmail, code).then(function () {
+    G.auth.verifyCode(email, code).then(function () {
       showMessage('');
       authMessage.hidden = true;
     }, function (err) {
