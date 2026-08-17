@@ -12,6 +12,7 @@
   var TYPE_LABELS = { stock: '株式', etf: 'ETF', crypto: '暗号資産', cash: '現金・貯金' };
 
   var jpyFormatter = new Intl.NumberFormat('ja-JP', { style: 'currency', currency: 'JPY', maximumFractionDigits: 0 });
+  var MASK = '¥*****';
 
   function formatJpy(value) {
     return jpyFormatter.format(Math.round(value));
@@ -33,6 +34,7 @@
     this.selectedCategory = 'shared';
     this.selectedType = 'stock';
     this.selectedCurrency = 'JPY';
+    this.amountsHidden = true;
 
     this.dom = {
       tabBtns: Array.prototype.slice.call(document.querySelectorAll('#assets-section .tab-btn')),
@@ -42,6 +44,7 @@
       summaryBar: document.getElementById('asset-summary-bar'),
       summaryLegend: document.getElementById('asset-summary-legend'),
       refreshBtn: document.getElementById('assets-refresh-btn'),
+      visibilityBtn: document.getElementById('assets-visibility-btn'),
 
       addBtn: document.getElementById('add-asset-btn'),
       dialog: document.getElementById('add-asset-dialog'),
@@ -66,12 +69,23 @@
   AssetApp.prototype.init = function () {
     var self = this;
     this.bindEvents();
+    this.updateVisibilityBtn();
     global.GoalTracker.enableDragReorder(this.dom.list, '.drag-handle', function (ids) {
       self.persistOrder(ids);
     });
     return this.loadData().then(function () {
       self.render();
     });
+  };
+
+  AssetApp.prototype.updateVisibilityBtn = function () {
+    this.dom.visibilityBtn.textContent = this.amountsHidden ? '🙈' : '👁️';
+    this.dom.visibilityBtn.setAttribute('aria-label', this.amountsHidden ? '金額を表示' : '金額を隠す');
+    this.dom.visibilityBtn.title = this.amountsHidden ? '金額を表示' : '金額を隠す';
+  };
+
+  AssetApp.prototype.displayJpy = function (value) {
+    return this.amountsHidden ? MASK : formatJpy(value);
   };
 
   AssetApp.prototype.loadData = function () {
@@ -112,6 +126,12 @@
 
     this.dom.refreshBtn.addEventListener('click', function () {
       self.refreshQuotes().then(function () { self.render(); });
+    });
+
+    this.dom.visibilityBtn.addEventListener('click', function () {
+      self.amountsHidden = !self.amountsHidden;
+      self.updateVisibilityBtn();
+      self.render();
     });
 
     this.dom.addBtn.addEventListener('click', function () {
@@ -286,7 +306,7 @@
       grandTotal += v;
     });
 
-    this.dom.totalEl.textContent = formatJpy(grandTotal);
+    this.dom.totalEl.textContent = this.displayJpy(grandTotal);
 
     this.dom.summaryBar.innerHTML = '';
     this.dom.summaryLegend.innerHTML = '';
@@ -301,7 +321,7 @@
       var dot = el('span', 'asset-summary-dot');
       dot.style.backgroundColor = CATEGORY_COLORS[cat];
       legendItem.appendChild(dot);
-      legendItem.appendChild(document.createTextNode(CATEGORY_LABELS[cat] + ' ' + formatJpy(totals[cat])));
+      legendItem.appendChild(document.createTextNode(CATEGORY_LABELS[cat] + ' ' + self.displayJpy(totals[cat])));
       self.dom.summaryLegend.appendChild(legendItem);
     });
   };
@@ -325,7 +345,9 @@
 
     var detailParts = [];
     if (asset.assetType === 'cash') {
-      detailParts.push((asset.currency === 'JPY' ? '¥' : '$') + Number(asset.amount || 0).toLocaleString());
+      detailParts.push(this.amountsHidden
+        ? MASK
+        : (asset.currency === 'JPY' ? '¥' : '$') + Number(asset.amount || 0).toLocaleString());
     } else {
       if (asset.symbol) detailParts.push(asset.symbol);
       if (asset.quantity != null) detailParts.push(asset.quantity + '口');
@@ -338,7 +360,7 @@
     row.appendChild(info);
 
     var value = this.valueJpy(asset);
-    row.appendChild(el('span', 'asset-value', value == null ? '取得中…' : formatJpy(value)));
+    row.appendChild(el('span', 'asset-value', value == null ? '取得中…' : this.displayJpy(value)));
 
     var del = el('button', 'todo-delete', '×');
     del.type = 'button';
