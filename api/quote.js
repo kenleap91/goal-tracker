@@ -1,13 +1,39 @@
 /**
  * Vercel serverless function: proxies stock/ETF/crypto/FX quotes from
- * Yahoo Finance's unofficial quote endpoint so the browser can fetch them
- * without hitting CORS (Yahoo doesn't send CORS headers for direct
- * browser requests). This is best-effort, unofficial, undocumented data —
- * fine for a personal net-worth dashboard, not for trading decisions.
+ * Yahoo Finance's unofficial per-symbol chart endpoint so the browser can
+ * fetch them without hitting CORS (Yahoo doesn't send CORS headers for
+ * direct browser requests). The chart endpoint is used instead of the v7
+ * quote endpoint because Yahoo now requires a session cookie + crumb for
+ * v7, while the chart endpoint still answers basic price requests without
+ * that dance. This is best-effort, unofficial, undocumented data — fine
+ * for a personal net-worth dashboard, not for trading decisions.
  *
  * GET /api/quote?symbols=AAPL,7203.T,BTC-USD,JPY=X
  * -> { AAPL: { price, currency, name }, ... }
  */
+var USER_AGENT = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36';
+
+function fetchOne(symbol) {
+  var url = 'https://query1.finance.yahoo.com/v8/finance/chart/' + encodeURIComponent(symbol) + '?interval=1d&range=1d';
+  return fetch(url, { headers: { 'User-Agent': USER_AGENT } })
+    .then(function (res) {
+      if (!res.ok) return null;
+      return res.json();
+    })
+    .then(function (data) {
+      var result = data && data.chart && data.chart.result && data.chart.result[0];
+      var meta = result && result.meta;
+      if (!meta || meta.regularMarketPrice == null) return null;
+      return {
+        symbol: symbol,
+        price: meta.regularMarketPrice,
+        currency: meta.currency,
+        name: meta.symbol || symbol
+      };
+    })
+    .catch(function () { return null; });
+}
+
 module.exports = async function handler(req, res) {
   var symbolsParam = req.query.symbols;
   if (!symbolsParam) {
@@ -26,27 +52,10 @@ module.exports = async function handler(req, res) {
   }
 
   try {
-    var url = 'https://query1.finance.yahoo.com/v7/finance/quote?symbols=' + encodeURIComponent(symbols.join(','));
-    var upstream = await fetch(url, {
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36'
-      }
-    });
-
-    if (!upstream.ok) {
-      res.status(502).json({ error: 'upstream error', status: upstream.status });
-      return;
-    }
-
-    var data = await upstream.json();
-    var quotes = (data && data.quoteResponse && data.quoteResponse.result) || [];
+    var quotes = await Promise.all(symbols.map(fetchOne));
     var results = {};
     quotes.forEach(function (q) {
-      results[q.symbol] = {
-        price: q.regularMarketPrice,
-        currency: q.currency,
-        name: q.shortName || q.longName || q.symbol
-      };
+      if (q) results[q.symbol] = { price: q.price, currency: q.currency, name: q.name };
     });
 
     res.setHeader('Cache-Control', 's-maxage=30, stale-while-revalidate=60');
