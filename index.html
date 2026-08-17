@@ -3,13 +3,13 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover">
-<title>わが家アプリ</title>
+<title>浪治家</title>
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
 <div id="auth-screen" class="auth-screen" hidden>
   <div class="auth-card">
-    <h1>目標トラッカー</h1>
+    <h1>浪治家</h1>
     <p class="auth-sub">メールでログインしてください</p>
     <form id="auth-form">
       <label class="field-label">
@@ -31,14 +31,10 @@
 
 <div id="home-screen" class="home-screen" hidden>
   <header class="app-header">
-    <h1 class="home-title">わが家アプリ</h1>
+    <h1 class="home-title">浪治家</h1>
     <button id="logout-btn" class="icon-btn" aria-label="ログアウト" title="ログアウト">⎋</button>
   </header>
   <div class="home-cards">
-    <button class="home-card" data-section="goal">
-      <span class="home-card-icon" aria-hidden="true">🎯</span>
-      <span class="home-card-label">目標</span>
-    </button>
     <button class="home-card" data-section="todo">
       <span class="home-card-icon" aria-hidden="true">✅</span>
       <span class="home-card-label">ToDo</span>
@@ -46,6 +42,10 @@
     <button class="home-card" data-section="chores">
       <span class="home-card-icon" aria-hidden="true">🧹</span>
       <span class="home-card-label">家事履歴</span>
+    </button>
+    <button class="home-card" data-section="goal">
+      <span class="home-card-icon" aria-hidden="true">🏃</span>
+      <span class="home-card-label">Kenのルーティン</span>
     </button>
   </div>
 </div>
