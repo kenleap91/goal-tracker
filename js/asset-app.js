@@ -353,7 +353,9 @@
 
   AssetApp.prototype.renderList = function () {
     var self = this;
-    var visible = this.assets.filter(function (a) { return a.category === self.activeCategory; });
+    var visible = this.assets
+      .filter(function (a) { return a.category === self.activeCategory; })
+      .sort(function (a, b) { return (a.position || 0) - (b.position || 0); });
     this.dom.list.innerHTML = '';
     this.dom.empty.hidden = visible.length > 0;
     visible.forEach(function (asset) {

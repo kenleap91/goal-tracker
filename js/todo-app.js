@@ -199,7 +199,9 @@
 
   TodoApp.prototype.render = function () {
     var self = this;
-    var visible = this.todos.filter(function (t) { return t.listType === self.activeList; });
+    var visible = this.todos
+      .filter(function (t) { return t.listType === self.activeList; })
+      .sort(function (a, b) { return (a.position || 0) - (b.position || 0); });
     this.dom.list.innerHTML = '';
     this.dom.empty.hidden = visible.length > 0;
     visible.forEach(function (todo) {
