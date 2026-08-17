@@ -15,7 +15,8 @@
       title: row.title,
       done: row.done,
       createdAt: row.created_at,
-      doneAt: row.done_at
+      doneAt: row.done_at,
+      position: row.position
     };
   }
 
@@ -33,6 +34,7 @@
     return this.client
       .from(TODOS_TABLE)
       .select('*')
+      .order('position', { ascending: true })
       .order('created_at', { ascending: true })
       .then(function (res) {
         check(res);
@@ -43,15 +45,27 @@
   TodoRepository.prototype.addTodo = function (input) {
     var title = (input && input.title || '').trim();
     var listType = (input && input.listType) || 'shared';
+    var position = (input && input.position) || 0;
     return this.client
       .from(TODOS_TABLE)
-      .insert({ list_type: listType, title: title, created_by: this.userId })
+      .insert({ list_type: listType, title: title, created_by: this.userId, position: position })
       .select()
       .single()
       .then(function (res) {
         check(res);
         return toTodo(res.data);
       });
+  };
+
+  TodoRepository.prototype.updateTodo = function (id, input) {
+    var patch = {};
+    if (input.title != null) patch.title = input.title.trim();
+    if (input.listType != null) patch.list_type = input.listType;
+    return this.client
+      .from(TODOS_TABLE)
+      .update(patch)
+      .eq('id', id)
+      .then(check);
   };
 
   TodoRepository.prototype.toggleDone = function (id, done) {
@@ -68,6 +82,19 @@
       .delete()
       .eq('id', id)
       .then(check);
+  };
+
+  // ids is an array of todo ids in their desired new order (within one
+  // list_type). Positions are recomputed as sequential multiples of 10.
+  TodoRepository.prototype.updatePositions = function (ids) {
+    var self = this;
+    return Promise.all(ids.map(function (id, index) {
+      return self.client
+        .from(TODOS_TABLE)
+        .update({ position: (index + 1) * 10 })
+        .eq('id', id)
+        .then(check);
+    }));
   };
 
   global.GoalTracker = global.GoalTracker || {};

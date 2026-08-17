@@ -209,7 +209,7 @@
 
 <dialog id="add-todo-dialog">
   <form id="add-todo-form">
-    <h2>新しいToDo</h2>
+    <h2 id="todo-dialog-heading">新しいToDo</h2>
     <label class="field-label">
       内容
       <input type="text" id="todo-title-input" required maxlength="60" placeholder="例: 牛乳を買う" autocomplete="off">
@@ -222,7 +222,7 @@
     </div>
     <div class="dialog-actions">
       <button type="button" id="todo-cancel-btn" class="btn-secondary">キャンセル</button>
-      <button type="submit" class="btn-primary">追加</button>
+      <button type="submit" id="todo-dialog-submit-btn" class="btn-primary">追加</button>
     </div>
   </form>
 </dialog>
@@ -241,6 +241,21 @@
   </form>
 </dialog>
 
+<dialog id="edit-chore-date-dialog">
+  <form id="edit-chore-date-form">
+    <h2>実施日を編集</h2>
+    <label class="field-label">
+      実施日
+      <input type="date" id="chore-date-input">
+    </label>
+    <div class="dialog-actions">
+      <button type="button" id="chore-date-clear-btn" class="btn-danger">未実施に戻す</button>
+      <button type="button" id="chore-date-cancel-btn" class="btn-secondary">キャンセル</button>
+      <button type="submit" class="btn-primary">保存</button>
+    </div>
+  </form>
+</dialog>
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script src="js/supabase-config.js"></script>
 <script src="js/auth.js"></script>
@@ -249,6 +264,7 @@
 <script src="js/server-repository.js"></script>
 <script src="js/todo-repository.js"></script>
 <script src="js/chore-repository.js"></script>
+<script src="js/drag-reorder.js"></script>
 <script src="js/app.js"></script>
 <script src="js/todo-app.js"></script>
 <script src="js/chore-app.js"></script>

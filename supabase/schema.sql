@@ -56,3 +56,8 @@ create policy "household todos" on goal_tracker_todos
 
 create policy "household chores" on goal_tracker_chores
   for all to authenticated using (true) with check (true);
+
+-- Manual drag-to-reorder ordering. Position is only meaningful within a
+-- single list_type for todos (each list is reordered independently).
+alter table goal_tracker_todos add column position integer not null default 0;
+alter table goal_tracker_chores add column position integer not null default 0;

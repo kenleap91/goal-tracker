@@ -19,6 +19,7 @@
     this.todos = [];
     this.activeList = 'shared';
     this.selectedListType = 'shared';
+    this.editingId = null;
 
     this.dom = {
       tabBtns: Array.prototype.slice.call(document.querySelectorAll('#todo-section .tab-btn')),
@@ -27,6 +28,8 @@
 
       addBtn: document.getElementById('add-todo-btn'),
       dialog: document.getElementById('add-todo-dialog'),
+      heading: document.getElementById('todo-dialog-heading'),
+      submitBtn: document.getElementById('todo-dialog-submit-btn'),
       form: document.getElementById('add-todo-form'),
       titleInput: document.getElementById('todo-title-input'),
       listPicker: document.getElementById('todo-list-picker'),
@@ -39,6 +42,9 @@
   TodoApp.prototype.init = function () {
     var self = this;
     this.bindEvents();
+    global.GoalTracker.enableDragReorder(this.dom.list, '.drag-handle', function (ids) {
+      self.persistOrder(ids);
+    });
     return this.loadData().then(function () {
       self.render();
     });
@@ -65,14 +71,14 @@
     });
 
     this.dom.addBtn.addEventListener('click', function () {
-      self.openAddDialog();
+      self.openDialog();
     });
     this.dom.cancelBtn.addEventListener('click', function () {
       self.dom.dialog.close();
     });
     this.dom.form.addEventListener('submit', function (e) {
       e.preventDefault();
-      self.handleAddSubmit();
+      self.handleFormSubmit();
     });
     Array.prototype.forEach.call(this.dom.listPicker.children, function (btn) {
       btn.addEventListener('click', function () {
@@ -88,9 +94,13 @@
     });
   };
 
-  TodoApp.prototype.openAddDialog = function () {
-    this.dom.titleInput.value = '';
-    this.selectedListType = this.activeList;
+  // Pass a todo to edit it; call with no argument to add a new one.
+  TodoApp.prototype.openDialog = function (todo) {
+    this.editingId = todo ? todo.id : null;
+    this.dom.heading.textContent = todo ? 'ToDoを編集' : '新しいToDo';
+    this.dom.submitBtn.textContent = todo ? '保存' : '追加';
+    this.dom.titleInput.value = todo ? todo.title : '';
+    this.selectedListType = todo ? todo.listType : this.activeList;
     Array.prototype.forEach.call(this.dom.listPicker.children, function (b) {
       b.classList.toggle('selected', b.getAttribute('data-list') === this.selectedListType);
     }, this);
@@ -98,12 +108,27 @@
     this.dom.titleInput.focus();
   };
 
-  TodoApp.prototype.handleAddSubmit = function () {
+  TodoApp.prototype.handleFormSubmit = function () {
     var self = this;
     var title = this.dom.titleInput.value.trim();
     if (!title) return;
-    this.repo.addTodo({ title: title, listType: this.selectedListType }).then(function (todo) {
-      self.todos.push(todo);
+
+    if (this.editingId) {
+      var todo = this.todos.find(function (t) { return t.id === self.editingId; });
+      this.repo.updateTodo(this.editingId, { title: title, listType: this.selectedListType }).then(function () {
+        todo.title = title;
+        todo.listType = self.selectedListType;
+        self.dom.dialog.close();
+        self.render();
+      });
+      return;
+    }
+
+    var maxPosition = this.todos
+      .filter(function (t) { return t.listType === self.selectedListType; })
+      .reduce(function (max, t) { return Math.max(max, t.position || 0); }, 0);
+    this.repo.addTodo({ title: title, listType: this.selectedListType, position: maxPosition + 10 }).then(function (created) {
+      self.todos.push(created);
       self.dom.dialog.close();
       self.render();
     });
@@ -129,9 +154,22 @@
     });
   };
 
+  TodoApp.prototype.persistOrder = function (ids) {
+    var self = this;
+    this.repo.updatePositions(ids).then(function () {
+      ids.forEach(function (id, index) {
+        var todo = self.todos.find(function (t) { return t.id === id; });
+        if (todo) todo.position = (index + 1) * 10;
+      });
+    });
+  };
+
   TodoApp.prototype.buildRow = function (todo) {
     var self = this;
     var row = el('li', 'todo-row' + (todo.done ? ' done' : ''));
+    row.setAttribute('data-id', todo.id);
+
+    row.appendChild(el('span', 'drag-handle', '⠿'));
 
     var check = el('button', 'todo-check');
     check.type = 'button';
@@ -142,7 +180,11 @@
     });
     row.appendChild(check);
 
-    row.appendChild(el('span', 'todo-title', todo.title));
+    var title = el('span', 'todo-title', todo.title);
+    title.addEventListener('click', function () {
+      self.openDialog(todo);
+    });
+    row.appendChild(title);
 
     var del = el('button', 'todo-delete', '×');
     del.type = 'button';

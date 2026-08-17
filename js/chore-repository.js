@@ -8,7 +8,7 @@
   var CHORES_TABLE = 'goal_tracker_chores';
 
   function toChore(row) {
-    return { id: row.id, name: row.name, lastDoneAt: row.last_done_at };
+    return { id: row.id, name: row.name, lastDoneAt: row.last_done_at, position: row.position };
   }
 
   function check(res) {
@@ -25,16 +25,18 @@
     return this.client
       .from(CHORES_TABLE)
       .select('*')
+      .order('position', { ascending: true })
+      .order('created_at', { ascending: true })
       .then(function (res) {
         check(res);
         return res.data.map(toChore);
       });
   };
 
-  ChoreRepository.prototype.addChore = function (name) {
+  ChoreRepository.prototype.addChore = function (name, position) {
     return this.client
       .from(CHORES_TABLE)
-      .insert({ name: (name || '').trim(), updated_by: this.userId })
+      .insert({ name: (name || '').trim(), updated_by: this.userId, position: position || 0 })
       .select()
       .single()
       .then(function (res) {
@@ -54,12 +56,33 @@
       .then(function () { return now; });
   };
 
+  // isoStringOrNull: pass null to revert the chore to 未実施 (not yet done).
+  ChoreRepository.prototype.updateLastDone = function (id, isoStringOrNull) {
+    return this.client
+      .from(CHORES_TABLE)
+      .update({ last_done_at: isoStringOrNull, updated_by: this.userId })
+      .eq('id', id)
+      .then(check);
+  };
+
   ChoreRepository.prototype.deleteChore = function (id) {
     return this.client
       .from(CHORES_TABLE)
       .delete()
       .eq('id', id)
       .then(check);
+  };
+
+  // ids is an array of chore ids in their desired new order.
+  ChoreRepository.prototype.updatePositions = function (ids) {
+    var self = this;
+    return Promise.all(ids.map(function (id, index) {
+      return self.client
+        .from(CHORES_TABLE)
+        .update({ position: (index + 1) * 10 })
+        .eq('id', id)
+        .then(check);
+    }));
   };
 
   global.GoalTracker = global.GoalTracker || {};

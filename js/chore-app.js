@@ -1,7 +1,8 @@
 /**
  * UI layer for the shared household chore log ("家事履歴"). Each row is a
  * place/task with a single last-done timestamp; the "実施" button bumps it
- * to now rather than keeping a full history, per the feature's design.
+ * to now, and the date label can be tapped to correct it (or clear it back
+ * to 未実施) rather than keeping a full history.
  */
 (function (global) {
   'use strict';
@@ -24,9 +25,25 @@
     return diffDays + '日前';
   }
 
+  // yyyy-mm-dd for a <input type="date">, in local time.
+  function toDateInputValue(isoString) {
+    if (!isoString) return '';
+    var d = new Date(isoString);
+    var mm = String(d.getMonth() + 1).padStart(2, '0');
+    var dd = String(d.getDate()).padStart(2, '0');
+    return d.getFullYear() + '-' + mm + '-' + dd;
+  }
+
+  // Noon local time avoids the date shifting by a day across timezones
+  // when the string is later parsed back with `new Date(...)`.
+  function fromDateInputValue(value) {
+    return new Date(value + 'T12:00:00').toISOString();
+  }
+
   function ChoreApp(repo) {
     this.repo = repo;
     this.chores = [];
+    this.editingId = null;
 
     this.dom = {
       list: document.getElementById('chore-list'),
@@ -36,13 +53,22 @@
       dialog: document.getElementById('add-chore-dialog'),
       form: document.getElementById('add-chore-form'),
       nameInput: document.getElementById('chore-name-input'),
-      cancelBtn: document.getElementById('chore-cancel-btn')
+      cancelBtn: document.getElementById('chore-cancel-btn'),
+
+      dateDialog: document.getElementById('edit-chore-date-dialog'),
+      dateForm: document.getElementById('edit-chore-date-form'),
+      dateInput: document.getElementById('chore-date-input'),
+      dateClearBtn: document.getElementById('chore-date-clear-btn'),
+      dateCancelBtn: document.getElementById('chore-date-cancel-btn')
     };
   }
 
   ChoreApp.prototype.init = function () {
     var self = this;
     this.bindEvents();
+    global.GoalTracker.enableDragReorder(this.dom.list, '.drag-handle', function (ids) {
+      self.persistOrder(ids);
+    });
     return this.loadData().then(function () {
       self.render();
     });
@@ -69,13 +95,25 @@
       e.preventDefault();
       self.handleAddSubmit();
     });
+
+    this.dom.dateCancelBtn.addEventListener('click', function () {
+      self.dom.dateDialog.close();
+    });
+    this.dom.dateForm.addEventListener('submit', function (e) {
+      e.preventDefault();
+      self.handleDateSubmit();
+    });
+    this.dom.dateClearBtn.addEventListener('click', function () {
+      self.handleDateClear();
+    });
   };
 
   ChoreApp.prototype.handleAddSubmit = function () {
     var self = this;
     var name = this.dom.nameInput.value.trim();
     if (!name) return;
-    this.repo.addChore(name).then(function (chore) {
+    var maxPosition = this.chores.reduce(function (max, c) { return Math.max(max, c.position || 0); }, 0);
+    this.repo.addChore(name, maxPosition + 10).then(function (chore) {
       self.chores.push(chore);
       self.dom.dialog.close();
       self.render();
@@ -100,13 +138,61 @@
     });
   };
 
+  ChoreApp.prototype.openDateDialog = function (chore) {
+    this.editingId = chore.id;
+    this.dom.dateInput.value = toDateInputValue(chore.lastDoneAt);
+    this.dom.dateDialog.showModal();
+  };
+
+  ChoreApp.prototype.handleDateSubmit = function () {
+    var self = this;
+    if (!this.editingId) return;
+    var value = this.dom.dateInput.value;
+    if (!value) return;
+    var iso = fromDateInputValue(value);
+    this.repo.updateLastDone(this.editingId, iso).then(function () {
+      var chore = self.chores.find(function (c) { return c.id === self.editingId; });
+      if (chore) chore.lastDoneAt = iso;
+      self.dom.dateDialog.close();
+      self.render();
+    });
+  };
+
+  ChoreApp.prototype.handleDateClear = function () {
+    var self = this;
+    if (!this.editingId) return;
+    this.repo.updateLastDone(this.editingId, null).then(function () {
+      var chore = self.chores.find(function (c) { return c.id === self.editingId; });
+      if (chore) chore.lastDoneAt = null;
+      self.dom.dateDialog.close();
+      self.render();
+    });
+  };
+
+  ChoreApp.prototype.persistOrder = function (ids) {
+    var self = this;
+    this.repo.updatePositions(ids).then(function () {
+      ids.forEach(function (id, index) {
+        var chore = self.chores.find(function (c) { return c.id === id; });
+        if (chore) chore.position = (index + 1) * 10;
+      });
+    });
+  };
+
   ChoreApp.prototype.buildRow = function (chore) {
     var self = this;
     var row = el('li', 'chore-row');
+    row.setAttribute('data-id', chore.id);
+
+    row.appendChild(el('span', 'drag-handle', '⠿'));
 
     var info = el('div', 'chore-info');
     info.appendChild(el('span', 'chore-name', chore.name));
-    info.appendChild(el('span', 'chore-sub', daysAgoLabel(chore.lastDoneAt)));
+    var sub = el('span', 'chore-sub', daysAgoLabel(chore.lastDoneAt));
+    sub.addEventListener('click', function () {
+      self.openDateDialog(chore);
+    });
+    info.appendChild(sub);
     row.appendChild(info);
 
     var doneBtn = el('button', 'btn-primary chore-done-btn', '実施');
@@ -130,9 +216,7 @@
   ChoreApp.prototype.render = function () {
     var self = this;
     var sorted = this.chores.slice().sort(function (a, b) {
-      if (!a.lastDoneAt) return -1;
-      if (!b.lastDoneAt) return 1;
-      return new Date(a.lastDoneAt) - new Date(b.lastDoneAt);
+      return (a.position || 0) - (b.position || 0);
     });
     this.dom.list.innerHTML = '';
     this.dom.empty.hidden = sorted.length > 0;

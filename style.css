@@ -119,6 +119,7 @@ body {
 .todo-title {
   flex: 1;
   font-size: 15px;
+  cursor: pointer;
 }
 .todo-row.done .todo-title {
   color: var(--text-muted);
@@ -190,6 +191,32 @@ body {
   padding: 8px 16px;
   font-size: 13px;
   border-radius: 999px;
+}
+
+/* Drag-to-reorder */
+.drag-handle {
+  color: var(--text-muted);
+  font-size: 18px;
+  cursor: grab;
+  padding: 4px 2px;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.todo-row.dragging,
+.chore-row.dragging {
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.18);
+  cursor: grabbing;
+}
+
+.chore-info {
+  cursor: default;
+}
+.chore-sub {
+  cursor: pointer;
+  text-decoration: underline;
+  text-decoration-style: dotted;
+  width: fit-content;
 }
 
 /* Header */
@@ -640,7 +667,10 @@ dialog h2 {
 #csv-start-date,
 #csv-end-date,
 #auth-email-input,
-#auth-code-input {
+#auth-code-input,
+#todo-title-input,
+#chore-name-input,
+#chore-date-input {
   width: 100%;
   font-size: 16px;
   padding: 10px 12px;
