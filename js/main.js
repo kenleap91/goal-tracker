@@ -7,7 +7,11 @@
   var authForm = document.getElementById('auth-form');
   var authEmailInput = document.getElementById('auth-email-input');
   var authSubmitBtn = document.getElementById('auth-submit-btn');
+  var authCodeForm = document.getElementById('auth-code-form');
+  var authCodeInput = document.getElementById('auth-code-input');
+  var authCodeSubmitBtn = document.getElementById('auth-code-submit-btn');
   var authMessage = document.getElementById('auth-message');
+  var pendingEmail = null;
 
   function showMessage(text) {
     authMessage.textContent = text;
@@ -20,11 +24,29 @@
     if (!email) return;
     authSubmitBtn.disabled = true;
     G.auth.sendMagicLink(email).then(function () {
-      showMessage('ログインリンクを ' + email + ' に送りました。メールを確認してください。');
+      pendingEmail = email;
+      authForm.hidden = true;
+      authCodeForm.hidden = false;
+      showMessage('確認コードを ' + email + ' に送りました。メール内の6桁のコードを入力してください。');
+      authCodeInput.focus();
     }, function (err) {
       showMessage('送信に失敗しました: ' + (err && err.message ? err.message : err));
     }).then(function () {
       authSubmitBtn.disabled = false;
+    });
+  });
+
+  authCodeForm.addEventListener('submit', function (e) {
+    e.preventDefault();
+    var code = authCodeInput.value.trim();
+    if (!code || !pendingEmail) return;
+    authCodeSubmitBtn.disabled = true;
+    G.auth.verifyCode(pendingEmail, code).then(function () {
+      showMessage('');
+      authMessage.hidden = true;
+    }, function (err) {
+      showMessage('ログインに失敗しました: ' + (err && err.message ? err.message : err));
+      authCodeSubmitBtn.disabled = false;
     });
   });
 

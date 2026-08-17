@@ -24,6 +24,13 @@
     });
   }
 
+  function verifyCode(email, token) {
+    return client.auth.verifyOtp({ email: email, token: token, type: 'email' }).then(function (res) {
+      if (res.error) throw res.error;
+      return res.data.session;
+    });
+  }
+
   function onAuthStateChange(callback) {
     client.auth.onAuthStateChange(function (_event, session) {
       callback(session);
@@ -38,6 +45,7 @@
     getClient: getClient,
     getSession: getSession,
     sendMagicLink: sendMagicLink,
+    verifyCode: verifyCode,
     onAuthStateChange: onAuthStateChange,
     signOut: signOut
   };

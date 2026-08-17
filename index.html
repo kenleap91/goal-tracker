@@ -16,7 +16,14 @@
         メールアドレス
         <input type="email" id="auth-email-input" required autocomplete="email" placeholder="you@example.com">
       </label>
-      <button type="submit" id="auth-submit-btn" class="btn-primary auth-submit">ログインリンクを送る</button>
+      <button type="submit" id="auth-submit-btn" class="btn-primary auth-submit">確認コードを送る</button>
+    </form>
+    <form id="auth-code-form" hidden>
+      <label class="field-label">
+        確認コード(メールに届いた数字)
+        <input type="text" id="auth-code-input" required inputmode="numeric" pattern="[0-9]*" maxlength="10" autocomplete="one-time-code" placeholder="12345678">
+      </label>
+      <button type="submit" id="auth-code-submit-btn" class="btn-primary auth-submit">ログイン</button>
     </form>
     <p id="auth-message" class="auth-message" hidden></p>
   </div>

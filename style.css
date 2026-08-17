@@ -111,6 +111,11 @@ body {
   color: var(--text-muted);
   margin: 16px 0 0;
 }
+#auth-code-input {
+  text-align: center;
+  letter-spacing: 6px;
+  font-size: 20px;
+}
 
 /* Date strip */
 .date-strip {
@@ -464,7 +469,9 @@ dialog h2 {
 }
 #activity-name-input,
 #csv-start-date,
-#csv-end-date {
+#csv-end-date,
+#auth-email-input,
+#auth-code-input {
   width: 100%;
   font-size: 16px;
   padding: 10px 12px;
