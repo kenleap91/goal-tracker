@@ -76,6 +76,9 @@ body {
 }
 
 /* Login screen */
+.auth-screen[hidden] {
+  display: none;
+}
 .auth-screen {
   min-height: 100vh;
   display: flex;
