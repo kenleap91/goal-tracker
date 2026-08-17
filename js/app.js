@@ -47,7 +47,7 @@
       nextDay: document.getElementById('next-day'),
       todayBtn: document.getElementById('today-btn'),
 
-      tabBtns: Array.prototype.slice.call(document.querySelectorAll('.tab-btn')),
+      tabBtns: Array.prototype.slice.call(document.querySelectorAll('#goal-section .tab-btn')),
       panels: {
         today: document.getElementById('tab-today'),
         calendar: document.getElementById('tab-calendar'),

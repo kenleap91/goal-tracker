@@ -3,7 +3,15 @@
 
   var G = window.GoalTracker;
   var authScreen = document.getElementById('auth-screen');
-  var appRoot = document.getElementById('app');
+  var homeScreen = document.getElementById('home-screen');
+  var sections = {
+    goal: document.getElementById('goal-section'),
+    todo: document.getElementById('todo-section'),
+    chores: document.getElementById('chores-section')
+  };
+  var sectionApps = {};
+  var client = null;
+  var userId = null;
   var authForm = document.getElementById('auth-form');
   var authEmailInput = document.getElementById('auth-email-input');
   var authSubmitBtn = document.getElementById('auth-submit-btn');
@@ -90,14 +98,38 @@
     });
   }
 
+  function showHome() {
+    homeScreen.hidden = false;
+    Object.keys(sections).forEach(function (key) { sections[key].hidden = true; });
+  }
+
+  function showSection(key) {
+    homeScreen.hidden = true;
+    Object.keys(sections).forEach(function (k) { sections[k].hidden = (k !== key); });
+    if (sectionApps[key]) return;
+
+    var repo, appInstance;
+    if (key === 'goal') {
+      repo = new G.ServerRepository(client, userId);
+      appInstance = new G.App(repo);
+    } else if (key === 'todo') {
+      repo = new G.TodoRepository(client, userId);
+      appInstance = new G.TodoApp(repo);
+    } else {
+      repo = new G.ChoreRepository(client, userId);
+      appInstance = new G.ChoreApp(repo);
+    }
+    sectionApps[key] = appInstance;
+    appInstance.init();
+  }
+
   function startApp(session) {
-    var client = G.auth.getClient();
-    var repo = new G.ServerRepository(client, session.user.id);
-    return migrateLocalDataIfNeeded(repo).then(function () {
+    client = G.auth.getClient();
+    userId = session.user.id;
+    var migrationRepo = new G.ServerRepository(client, userId);
+    return migrateLocalDataIfNeeded(migrationRepo).then(function () {
       authScreen.hidden = true;
-      appRoot.hidden = false;
-      var app = new G.App(repo);
-      return app.init();
+      showHome();
     });
   }
 
@@ -105,6 +137,17 @@
     var logoutBtn = document.getElementById('logout-btn');
     logoutBtn.addEventListener('click', function () {
       G.auth.signOut().then(function () { window.location.reload(); });
+    });
+
+    Array.prototype.forEach.call(document.querySelectorAll('.home-card'), function (card) {
+      card.addEventListener('click', function () {
+        showSection(card.getAttribute('data-section'));
+      });
+    });
+    Array.prototype.forEach.call(document.querySelectorAll('[data-back]'), function (btn) {
+      btn.addEventListener('click', function () {
+        showHome();
+      });
     });
 
     G.auth.getSession().then(function (session) {
@@ -116,7 +159,7 @@
     });
 
     G.auth.onAuthStateChange(function (session) {
-      if (session && appRoot.hidden) {
+      if (session && homeScreen.hidden && client === null) {
         startApp(session);
       }
     });

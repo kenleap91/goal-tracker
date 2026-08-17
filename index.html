@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover">
-<title>目標トラッカー</title>
+<title>わが家アプリ</title>
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -29,19 +29,41 @@
   </div>
 </div>
 
-<div id="app" hidden>
+<div id="home-screen" class="home-screen" hidden>
+  <header class="app-header">
+    <h1 class="home-title">わが家アプリ</h1>
+    <button id="logout-btn" class="icon-btn" aria-label="ログアウト" title="ログアウト">⎋</button>
+  </header>
+  <div class="home-cards">
+    <button class="home-card" data-section="goal">
+      <span class="home-card-icon" aria-hidden="true">🎯</span>
+      <span class="home-card-label">目標</span>
+    </button>
+    <button class="home-card" data-section="todo">
+      <span class="home-card-icon" aria-hidden="true">✅</span>
+      <span class="home-card-label">ToDo</span>
+    </button>
+    <button class="home-card" data-section="chores">
+      <span class="home-card-icon" aria-hidden="true">🧹</span>
+      <span class="home-card-label">家事履歴</span>
+    </button>
+  </div>
+</div>
+
+<div id="goal-section" class="section" hidden>
 
   <header class="app-header">
-    <div class="date-nav">
-      <button id="prev-day" class="icon-btn" aria-label="前の日">‹</button>
-      <h1 id="current-date-label">-</h1>
-      <button id="next-day" class="icon-btn" aria-label="次の日">›</button>
-    </div>
+    <button class="icon-btn back-btn" data-back aria-label="ホームに戻る">‹ ホーム</button>
     <div class="header-actions">
       <button id="today-btn" class="pill-btn">今日</button>
-      <button id="logout-btn" class="icon-btn" aria-label="ログアウト" title="ログアウト">⎋</button>
     </div>
   </header>
+
+  <div class="date-nav date-nav-row">
+    <button id="prev-day" class="icon-btn" aria-label="前の日">‹</button>
+    <h1 id="current-date-label">-</h1>
+    <button id="next-day" class="icon-btn" aria-label="次の日">›</button>
+  </div>
 
   <div id="date-strip" class="date-strip"></div>
 
@@ -81,6 +103,48 @@
   </main>
 
   <button id="add-activity-btn" class="fab" aria-label="目標を追加">+</button>
+</div>
+
+<div id="todo-section" class="section" hidden>
+
+  <header class="app-header">
+    <button class="icon-btn back-btn" data-back aria-label="ホームに戻る">‹ ホーム</button>
+    <h1 class="section-title">ToDo</h1>
+  </header>
+
+  <nav class="tabs">
+    <button class="tab-btn active" data-list="shared">共通</button>
+    <button class="tab-btn" data-list="ken">Ken</button>
+    <button class="tab-btn" data-list="nao">Nao</button>
+  </nav>
+
+  <main>
+    <div class="stats-header">
+      <button id="todo-csv-btn" class="csv-export-btn">
+        <span class="csv-export-icon" aria-hidden="true">⬇</span>
+        CSV書き出し
+      </button>
+    </div>
+    <ul id="todo-list" class="activity-list todo-list"></ul>
+    <p id="todo-empty" class="empty-state" hidden>まだToDoがありません。右下の + から追加しましょう。</p>
+  </main>
+
+  <button id="add-todo-btn" class="fab" aria-label="ToDoを追加">+</button>
+</div>
+
+<div id="chores-section" class="section" hidden>
+
+  <header class="app-header">
+    <button class="icon-btn back-btn" data-back aria-label="ホームに戻る">‹ ホーム</button>
+    <h1 class="section-title">家事履歴</h1>
+  </header>
+
+  <main>
+    <ul id="chore-list" class="chore-list"></ul>
+    <p id="chore-empty" class="empty-state" hidden>まだ家事が登録されていません。右下の + から追加しましょう。</p>
+  </main>
+
+  <button id="add-chore-btn" class="fab" aria-label="家事を追加">+</button>
 </div>
 
 <dialog id="add-activity-dialog">
@@ -143,13 +207,51 @@
   </form>
 </dialog>
 
+<dialog id="add-todo-dialog">
+  <form id="add-todo-form">
+    <h2>新しいToDo</h2>
+    <label class="field-label">
+      内容
+      <input type="text" id="todo-title-input" required maxlength="60" placeholder="例: 牛乳を買う" autocomplete="off">
+    </label>
+    <p class="field-label">リスト</p>
+    <div class="list-picker" id="todo-list-picker">
+      <button type="button" class="list-option selected" data-list="shared">共通</button>
+      <button type="button" class="list-option" data-list="ken">Ken</button>
+      <button type="button" class="list-option" data-list="nao">Nao</button>
+    </div>
+    <div class="dialog-actions">
+      <button type="button" id="todo-cancel-btn" class="btn-secondary">キャンセル</button>
+      <button type="submit" class="btn-primary">追加</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog id="add-chore-dialog">
+  <form id="add-chore-form">
+    <h2>新しい家事</h2>
+    <label class="field-label">
+      場所・項目
+      <input type="text" id="chore-name-input" required maxlength="40" placeholder="例: お風呂" autocomplete="off">
+    </label>
+    <div class="dialog-actions">
+      <button type="button" id="chore-cancel-btn" class="btn-secondary">キャンセル</button>
+      <button type="submit" class="btn-primary">追加</button>
+    </div>
+  </form>
+</dialog>
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script src="js/supabase-config.js"></script>
 <script src="js/auth.js"></script>
 <script src="js/storage.js"></script>
 <script src="js/streaks.js"></script>
 <script src="js/server-repository.js"></script>
+<script src="js/todo-repository.js"></script>
+<script src="js/chore-repository.js"></script>
 <script src="js/app.js"></script>
+<script src="js/todo-app.js"></script>
+<script src="js/chore-app.js"></script>
 <script src="js/main.js"></script>
 </body>
 </html>

@@ -26,3 +26,33 @@ create policy "own activities" on goal_tracker_activities
 
 create policy "own completions" on goal_tracker_completions
   for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
+
+-- Shared with the whole household (Ken + Nao). Not yet restricted to their
+-- specific emails since signups are still open — see README for the
+-- follow-up once Nao's account exists.
+create table goal_tracker_todos (
+  id uuid primary key default gen_random_uuid(),
+  list_type text not null check (list_type in ('shared', 'ken', 'nao')),
+  title text not null,
+  done boolean not null default false,
+  created_by uuid not null references auth.users(id) on delete cascade,
+  created_at timestamptz not null default now(),
+  done_at timestamptz
+);
+
+create table goal_tracker_chores (
+  id uuid primary key default gen_random_uuid(),
+  name text not null,
+  last_done_at timestamptz,
+  updated_by uuid references auth.users(id) on delete set null,
+  created_at timestamptz not null default now()
+);
+
+alter table goal_tracker_todos enable row level security;
+alter table goal_tracker_chores enable row level security;
+
+create policy "household todos" on goal_tracker_todos
+  for all to authenticated using (true) with check (true);
+
+create policy "household chores" on goal_tracker_chores
+  for all to authenticated using (true) with check (true);
