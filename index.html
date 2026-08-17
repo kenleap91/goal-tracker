@@ -47,6 +47,10 @@
       <span class="home-card-icon" aria-hidden="true">🏃</span>
       <span class="home-card-label">Kenのルーティン</span>
     </button>
+    <button class="home-card" data-section="assets">
+      <span class="home-card-icon" aria-hidden="true">💰</span>
+      <span class="home-card-label">資産管理</span>
+    </button>
   </div>
 </div>
 
@@ -145,6 +149,34 @@
   </main>
 
   <button id="add-chore-btn" class="fab" aria-label="家事を追加">+</button>
+</div>
+
+<div id="assets-section" class="section" hidden>
+
+  <header class="app-header">
+    <button class="icon-btn back-btn" data-back aria-label="ホームに戻る">‹ ホーム</button>
+    <h1 class="section-title">資産管理</h1>
+    <button id="assets-refresh-btn" class="icon-btn" aria-label="価格を更新" title="価格を更新">⟳</button>
+  </header>
+
+  <div class="asset-summary">
+    <div class="asset-summary-total" id="asset-total">¥0</div>
+    <div class="asset-summary-bar" id="asset-summary-bar"></div>
+    <div class="asset-summary-legend" id="asset-summary-legend"></div>
+  </div>
+
+  <nav class="tabs">
+    <button class="tab-btn active" data-category="shared">共通</button>
+    <button class="tab-btn" data-category="ken">Ken</button>
+    <button class="tab-btn" data-category="nao">Nao</button>
+  </nav>
+
+  <main>
+    <ul id="asset-list" class="asset-list"></ul>
+    <p id="asset-empty" class="empty-state" hidden>まだ資産が登録されていません。右下の + から追加しましょう。</p>
+  </main>
+
+  <button id="add-asset-btn" class="fab" aria-label="資産を追加">+</button>
 </div>
 
 <dialog id="add-activity-dialog">
@@ -256,6 +288,67 @@
   </form>
 </dialog>
 
+<dialog id="add-asset-dialog">
+  <form id="add-asset-form">
+    <h2 id="asset-dialog-heading">新しい資産</h2>
+    <label class="field-label">
+      名前
+      <input type="text" id="asset-name-input" required maxlength="40" placeholder="例: トヨタ自動車" autocomplete="off">
+    </label>
+
+    <p class="field-label">区分</p>
+    <div class="list-picker" id="asset-category-picker">
+      <button type="button" class="list-option selected" data-category="shared">共通</button>
+      <button type="button" class="list-option" data-category="ken">Ken</button>
+      <button type="button" class="list-option" data-category="nao">Nao</button>
+    </div>
+
+    <p class="field-label">種類</p>
+    <div class="list-picker" id="asset-type-picker">
+      <button type="button" class="list-option selected" data-type="stock">株式</button>
+      <button type="button" class="list-option" data-type="etf">ETF</button>
+      <button type="button" class="list-option" data-type="crypto">暗号資産</button>
+      <button type="button" class="list-option" data-type="cash">現金・貯金</button>
+    </div>
+
+    <div id="asset-priced-fields">
+      <label class="field-label">
+        ティッカー(価格取得用)
+        <input type="text" id="asset-symbol-input" maxlength="20" placeholder="例: 7203.T / AAPL / BTC-USD" autocomplete="off">
+      </label>
+      <label class="field-label">
+        数量
+        <input type="number" id="asset-quantity-input" step="any" min="0" placeholder="例: 100">
+      </label>
+    </div>
+
+    <div id="asset-cash-fields" hidden>
+      <label class="field-label">
+        金額
+        <input type="number" id="asset-amount-input" step="any" min="0" placeholder="例: 500000">
+      </label>
+    </div>
+
+    <div id="asset-currency-section" hidden>
+      <p class="field-label">通貨</p>
+      <div class="list-picker" id="asset-currency-picker">
+        <button type="button" class="list-option selected" data-currency="JPY">円</button>
+        <button type="button" class="list-option" data-currency="USD">米ドル</button>
+      </div>
+    </div>
+
+    <label class="field-label">
+      メモ
+      <textarea id="asset-memo-input" maxlength="200" rows="2" placeholder="任意"></textarea>
+    </label>
+
+    <div class="dialog-actions">
+      <button type="button" id="asset-cancel-btn" class="btn-secondary">キャンセル</button>
+      <button type="submit" id="asset-dialog-submit-btn" class="btn-primary">追加</button>
+    </div>
+  </form>
+</dialog>
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script src="js/supabase-config.js"></script>
 <script src="js/auth.js"></script>
@@ -264,10 +357,13 @@
 <script src="js/server-repository.js"></script>
 <script src="js/todo-repository.js"></script>
 <script src="js/chore-repository.js"></script>
+<script src="js/asset-repository.js"></script>
+<script src="js/price-service.js"></script>
 <script src="js/drag-reorder.js"></script>
 <script src="js/app.js"></script>
 <script src="js/todo-app.js"></script>
 <script src="js/chore-app.js"></script>
+<script src="js/asset-app.js"></script>
 <script src="js/main.js"></script>
 </body>
 </html>

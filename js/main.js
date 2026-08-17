@@ -7,7 +7,8 @@
   var sections = {
     goal: document.getElementById('goal-section'),
     todo: document.getElementById('todo-section'),
-    chores: document.getElementById('chores-section')
+    chores: document.getElementById('chores-section'),
+    assets: document.getElementById('assets-section')
   };
   var sectionApps = {};
   var client = null;
@@ -115,9 +116,12 @@
     } else if (key === 'todo') {
       repo = new G.TodoRepository(client, userId);
       appInstance = new G.TodoApp(repo);
-    } else {
+    } else if (key === 'chores') {
       repo = new G.ChoreRepository(client, userId);
       appInstance = new G.ChoreApp(repo);
+    } else {
+      repo = new G.AssetRepository(client, userId);
+      appInstance = new G.AssetApp(repo);
     }
     sectionApps[key] = appInstance;
     appInstance.init();

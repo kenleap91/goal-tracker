@@ -61,3 +61,24 @@ create policy "household chores" on goal_tracker_chores
 -- single list_type for todos (each list is reordered independently).
 alter table goal_tracker_todos add column position integer not null default 0;
 alter table goal_tracker_chores add column position integer not null default 0;
+
+-- Household net-worth dashboard. Live stock/ETF/crypto prices are fetched
+-- client-side via the api/quote.js Vercel function, not stored here.
+create table goal_tracker_assets (
+  id uuid primary key default gen_random_uuid(),
+  category text not null check (category in ('shared', 'ken', 'nao')),
+  asset_type text not null check (asset_type in ('stock', 'etf', 'crypto', 'cash')),
+  name text not null,
+  symbol text,
+  quantity numeric,
+  amount numeric,
+  currency text not null default 'JPY',
+  memo text,
+  created_by uuid not null references auth.users(id) on delete cascade,
+  created_at timestamptz not null default now()
+);
+
+alter table goal_tracker_assets enable row level security;
+
+create policy "household assets" on goal_tracker_assets
+  for all to authenticated using (true) with check (true);

@@ -219,6 +219,112 @@ body {
   width: fit-content;
 }
 
+/* Asset dashboard */
+.asset-summary {
+  padding: 4px 16px 12px;
+}
+.asset-summary-total {
+  font-size: 28px;
+  font-weight: 800;
+  margin-bottom: 10px;
+}
+.asset-summary-bar {
+  display: flex;
+  height: 10px;
+  border-radius: 999px;
+  overflow: hidden;
+  background: var(--border);
+  margin-bottom: 10px;
+}
+.asset-summary-segment {
+  height: 100%;
+}
+.asset-summary-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.asset-summary-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+.asset-summary-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.asset-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.asset-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: var(--card-bg);
+  border-radius: 14px;
+  padding: 14px 16px;
+}
+.asset-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+.asset-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.asset-name {
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.asset-type-badge {
+  font-size: 11px;
+  color: var(--text-muted);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 2px 8px;
+}
+.asset-sub {
+  font-size: 13px;
+  color: var(--text-muted);
+}
+.asset-memo {
+  font-size: 12px;
+  color: var(--text-muted);
+  font-style: italic;
+}
+.asset-value {
+  font-size: 15px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+#asset-memo-input {
+  width: 100%;
+  font-size: 14px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  margin-top: 6px;
+  margin-bottom: 16px;
+  resize: vertical;
+  font-family: inherit;
+}
+
 /* Header */
 .app-header {
   display: flex;
@@ -670,7 +776,11 @@ dialog h2 {
 #auth-code-input,
 #todo-title-input,
 #chore-name-input,
-#chore-date-input {
+#chore-date-input,
+#asset-name-input,
+#asset-symbol-input,
+#asset-quantity-input,
+#asset-amount-input {
   width: 100%;
   font-size: 16px;
   padding: 10px 12px;
