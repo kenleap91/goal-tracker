@@ -19,7 +19,8 @@
       amount: row.amount,
       currency: row.currency,
       memo: row.memo,
-      createdAt: row.created_at
+      createdAt: row.created_at,
+      position: row.position
     };
   }
 
@@ -37,6 +38,7 @@
     return this.client
       .from(ASSETS_TABLE)
       .select('*')
+      .order('position', { ascending: true })
       .order('created_at', { ascending: true })
       .then(function (res) {
         check(res);
@@ -56,6 +58,7 @@
         amount: input.amount != null ? input.amount : null,
         currency: input.currency || 'JPY',
         memo: input.memo || null,
+        position: input.position || 0,
         created_by: this.userId
       })
       .select()
@@ -89,6 +92,19 @@
       .delete()
       .eq('id', id)
       .then(check);
+  };
+
+  // ids is an array of asset ids in their desired new order (within one
+  // category). Positions are recomputed as sequential multiples of 10.
+  AssetRepository.prototype.updatePositions = function (ids) {
+    var self = this;
+    return Promise.all(ids.map(function (id, index) {
+      return self.client
+        .from(ASSETS_TABLE)
+        .update({ position: (index + 1) * 10 })
+        .eq('id', id)
+        .then(check);
+    }));
   };
 
   global.GoalTracker = global.GoalTracker || {};

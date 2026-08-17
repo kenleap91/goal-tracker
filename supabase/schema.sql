@@ -82,3 +82,6 @@ alter table goal_tracker_assets enable row level security;
 
 create policy "household assets" on goal_tracker_assets
   for all to authenticated using (true) with check (true);
+
+-- Manual drag-to-reorder ordering, same convention as todos/chores.
+alter table goal_tracker_assets add column position integer not null default 0;

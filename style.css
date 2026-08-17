@@ -204,7 +204,8 @@ body {
   -webkit-user-select: none;
 }
 .todo-row.dragging,
-.chore-row.dragging {
+.chore-row.dragging,
+.asset-row.dragging {
   box-shadow: 0 6px 16px rgba(0, 0, 0, 0.18);
   cursor: grabbing;
 }

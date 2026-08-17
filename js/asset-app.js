@@ -66,6 +66,9 @@
   AssetApp.prototype.init = function () {
     var self = this;
     this.bindEvents();
+    global.GoalTracker.enableDragReorder(this.dom.list, '.drag-handle', function (ids) {
+      self.persistOrder(ids);
+    });
     return this.loadData().then(function () {
       self.render();
     });
@@ -205,14 +208,31 @@
       memo: this.dom.memoInput.value.trim()
     };
 
-    var save = this.editingId
-      ? this.repo.updateAsset(this.editingId, input).then(function () { return null; })
-      : this.repo.addAsset(input);
+    var save;
+    if (this.editingId) {
+      save = this.repo.updateAsset(this.editingId, input);
+    } else {
+      var maxPosition = this.assets
+        .filter(function (a) { return a.category === input.category; })
+        .reduce(function (max, a) { return Math.max(max, a.position || 0); }, 0);
+      input.position = maxPosition + 10;
+      save = this.repo.addAsset(input);
+    }
 
-    save.then(function (created) {
+    save.then(function () {
       return self.loadData().then(function () {
         self.dom.dialog.close();
         self.render();
+      });
+    });
+  };
+
+  AssetApp.prototype.persistOrder = function (ids) {
+    var self = this;
+    this.repo.updatePositions(ids).then(function () {
+      ids.forEach(function (id, index) {
+        var asset = self.assets.find(function (a) { return a.id === id; });
+        if (asset) asset.position = (index + 1) * 10;
       });
     });
   };
@@ -289,6 +309,9 @@
   AssetApp.prototype.buildRow = function (asset) {
     var self = this;
     var row = el('li', 'asset-row');
+    row.setAttribute('data-id', asset.id);
+
+    row.appendChild(el('span', 'drag-handle', '⠿'));
 
     var info = el('div', 'asset-info');
     var head = el('div', 'asset-head');
