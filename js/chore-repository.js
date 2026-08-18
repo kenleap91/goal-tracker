@@ -8,7 +8,7 @@
   var CHORES_TABLE = 'goal_tracker_chores';
 
   function toChore(row) {
-    return { id: row.id, name: row.name, lastDoneAt: row.last_done_at, position: row.position };
+    return { id: row.id, name: row.name, lastDoneAt: row.last_done_at, position: row.position, nextDueDate: row.next_due_date };
   }
 
   function check(res) {
@@ -33,10 +33,10 @@
       });
   };
 
-  ChoreRepository.prototype.addChore = function (name, position) {
+  ChoreRepository.prototype.addChore = function (name, position, nextDueDate) {
     return this.client
       .from(CHORES_TABLE)
-      .insert({ name: (name || '').trim(), updated_by: this.userId, position: position || 0 })
+      .insert({ name: (name || '').trim(), updated_by: this.userId, position: position || 0, next_due_date: nextDueDate || null })
       .select()
       .single()
       .then(function (res) {
@@ -61,6 +61,14 @@
     return this.client
       .from(CHORES_TABLE)
       .update({ last_done_at: isoStringOrNull, updated_by: this.userId })
+      .eq('id', id)
+      .then(check);
+  };
+
+  ChoreRepository.prototype.updateNextDueDate = function (id, dateOrNull) {
+    return this.client
+      .from(CHORES_TABLE)
+      .update({ next_due_date: dateOrNull, updated_by: this.userId })
       .eq('id', id)
       .then(check);
   };

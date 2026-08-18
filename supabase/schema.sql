@@ -85,3 +85,7 @@ create policy "household assets" on goal_tracker_assets
 
 -- Manual drag-to-reorder ordering, same convention as todos/chores.
 alter table goal_tracker_assets add column position integer not null default 0;
+
+-- Due dates for the home-screen dashboard (todos due soon / chores due soon).
+alter table goal_tracker_todos add column due_date date;
+alter table goal_tracker_chores add column next_due_date date;

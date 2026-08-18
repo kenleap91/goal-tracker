@@ -36,7 +36,7 @@
       pendingEmail = email;
       authForm.hidden = true;
       authCodeForm.hidden = false;
-      showMessage('確認コードを ' + email + ' に送りました。メール内の6桁のコードを入力してください。');
+      showMessage('確認コードを ' + email + ' に送りました。メール内の8桁のコードを入力してください。');
       authCodeInput.focus();
     }, function (err) {
       showMessage('送信に失敗しました: ' + (err && err.message ? err.message : err));
@@ -99,9 +99,83 @@
     });
   }
 
+  function daysUntil(dateStr, todayDay) {
+    var parts = dateStr.split('-').map(Number);
+    var target = new Date(parts[0], parts[1] - 1, parts[2]);
+    return Math.round((target - todayDay) / 86400000);
+  }
+
+  function dueLabel(dateStr, diff, todayWord) {
+    var mmdd = dateStr.slice(5).replace('-', '/');
+    if (diff < 0) return mmdd + '(期限切れ)';
+    if (diff === 0) return mmdd + '(' + todayWord + ')';
+    return mmdd + '(あと' + diff + '日)';
+  }
+
+  function buildDashboardItem(label, dateStr, diff, todayWord, urgentThreshold, onClick) {
+    var li = document.createElement('li');
+    li.className = 'dashboard-item';
+    var name = document.createElement('span');
+    name.textContent = label;
+    var date = document.createElement('span');
+    date.className = 'dashboard-item-date' + (diff <= urgentThreshold ? ' urgent' : '');
+    date.textContent = dueLabel(dateStr, diff, todayWord);
+    li.appendChild(name);
+    li.appendChild(date);
+    li.addEventListener('click', onClick);
+    return li;
+  }
+
+  function renderDashboard() {
+    var dashboard = document.getElementById('home-dashboard');
+    var todoGroup = document.getElementById('dashboard-todo-group');
+    var todoList = document.getElementById('dashboard-todo-list');
+    var choreGroup = document.getElementById('dashboard-chore-group');
+    var choreList = document.getElementById('dashboard-chore-list');
+
+    var todoRepo = new G.TodoRepository(client, userId);
+    var choreRepo = new G.ChoreRepository(client, userId);
+    var today = new Date();
+    var todayDay = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+
+    return Promise.all([todoRepo.getTodos(), choreRepo.getChores()]).then(function (results) {
+      var todos = results[0];
+      var chores = results[1];
+
+      var dueTodos = todos
+        .filter(function (t) { return !t.done && t.dueDate && daysUntil(t.dueDate, todayDay) <= 3; })
+        .sort(function (a, b) { return daysUntil(a.dueDate, todayDay) - daysUntil(b.dueDate, todayDay); });
+
+      var dueChores = chores
+        .filter(function (c) { return c.nextDueDate && daysUntil(c.nextDueDate, todayDay) <= 7; })
+        .sort(function (a, b) { return daysUntil(a.nextDueDate, todayDay) - daysUntil(b.nextDueDate, todayDay); });
+
+      todoList.innerHTML = '';
+      dueTodos.forEach(function (t) {
+        var diff = daysUntil(t.dueDate, todayDay);
+        todoList.appendChild(buildDashboardItem(t.title, t.dueDate, diff, '今日まで', 3, function () {
+          showSection('todo');
+        }));
+      });
+      todoGroup.hidden = dueTodos.length === 0;
+
+      choreList.innerHTML = '';
+      dueChores.forEach(function (c) {
+        var diff = daysUntil(c.nextDueDate, todayDay);
+        choreList.appendChild(buildDashboardItem(c.name, c.nextDueDate, diff, '今日', 7, function () {
+          showSection('chores');
+        }));
+      });
+      choreGroup.hidden = dueChores.length === 0;
+
+      dashboard.hidden = dueTodos.length === 0 && dueChores.length === 0;
+    });
+  }
+
   function showHome() {
     homeScreen.hidden = false;
     Object.keys(sections).forEach(function (key) { sections[key].hidden = true; });
+    renderDashboard();
   }
 
   function showSection(key) {

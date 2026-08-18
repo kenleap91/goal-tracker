@@ -40,6 +40,23 @@
     return new Date(value + 'T12:00:00').toISOString();
   }
 
+  // Days from today (local) until dateStr (yyyy-mm-dd). Negative = overdue.
+  function daysUntil(dateStr) {
+    var today = new Date();
+    var todayDay = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+    var parts = dateStr.split('-').map(Number);
+    var target = new Date(parts[0], parts[1] - 1, parts[2]);
+    return Math.round((target - todayDay) / 86400000);
+  }
+
+  function nextDueLabel(dateStr) {
+    var diff = daysUntil(dateStr);
+    var mmdd = dateStr.slice(5).replace('-', '/');
+    if (diff < 0) return '次回 ' + mmdd + '(期限切れ)';
+    if (diff === 0) return '次回 ' + mmdd + '(今日)';
+    return '次回 ' + mmdd + '(あと' + diff + '日)';
+  }
+
   function ChoreApp(repo) {
     this.repo = repo;
     this.chores = [];
@@ -53,11 +70,13 @@
       dialog: document.getElementById('add-chore-dialog'),
       form: document.getElementById('add-chore-form'),
       nameInput: document.getElementById('chore-name-input'),
+      nextDueInput: document.getElementById('chore-next-due-input'),
       cancelBtn: document.getElementById('chore-cancel-btn'),
 
       dateDialog: document.getElementById('edit-chore-date-dialog'),
       dateForm: document.getElementById('edit-chore-date-form'),
       dateInput: document.getElementById('chore-date-input'),
+      nextDueEditInput: document.getElementById('chore-next-due-edit-input'),
       dateClearBtn: document.getElementById('chore-date-clear-btn'),
       dateCancelBtn: document.getElementById('chore-date-cancel-btn')
     };
@@ -85,6 +104,7 @@
     var self = this;
     this.dom.addBtn.addEventListener('click', function () {
       self.dom.nameInput.value = '';
+      self.dom.nextDueInput.value = '';
       self.dom.dialog.showModal();
       self.dom.nameInput.focus();
     });
@@ -112,8 +132,9 @@
     var self = this;
     var name = this.dom.nameInput.value.trim();
     if (!name) return;
+    var nextDueDate = this.dom.nextDueInput.value || null;
     var maxPosition = this.chores.reduce(function (max, c) { return Math.max(max, c.position || 0); }, 0);
-    this.repo.addChore(name, maxPosition + 10).then(function (chore) {
+    this.repo.addChore(name, maxPosition + 10, nextDueDate).then(function (chore) {
       self.chores.push(chore);
       self.dom.dialog.close();
       self.render();
@@ -141,6 +162,7 @@
   ChoreApp.prototype.openDateDialog = function (chore) {
     this.editingId = chore.id;
     this.dom.dateInput.value = toDateInputValue(chore.lastDoneAt);
+    this.dom.nextDueEditInput.value = chore.nextDueDate || '';
     this.dom.dateDialog.showModal();
   };
 
@@ -148,11 +170,17 @@
     var self = this;
     if (!this.editingId) return;
     var value = this.dom.dateInput.value;
-    if (!value) return;
-    var iso = fromDateInputValue(value);
-    this.repo.updateLastDone(this.editingId, iso).then(function () {
+    var iso = value ? fromDateInputValue(value) : null;
+    var nextDueDate = this.dom.nextDueEditInput.value || null;
+    Promise.all([
+      this.repo.updateLastDone(this.editingId, iso),
+      this.repo.updateNextDueDate(this.editingId, nextDueDate)
+    ]).then(function () {
       var chore = self.chores.find(function (c) { return c.id === self.editingId; });
-      if (chore) chore.lastDoneAt = iso;
+      if (chore) {
+        chore.lastDoneAt = iso;
+        chore.nextDueDate = nextDueDate;
+      }
       self.dom.dateDialog.close();
       self.render();
     });
@@ -193,6 +221,15 @@
       self.openDateDialog(chore);
     });
     info.appendChild(sub);
+    if (chore.nextDueDate) {
+      var diff = daysUntil(chore.nextDueDate);
+      var badgeClass = 'chore-due-badge' + (diff <= 7 ? ' urgent' : '');
+      var badge = el('span', badgeClass, nextDueLabel(chore.nextDueDate));
+      badge.addEventListener('click', function () {
+        self.openDateDialog(chore);
+      });
+      info.appendChild(badge);
+    }
     row.appendChild(info);
 
     var doneBtn = el('button', 'btn-primary chore-done-btn', '実施');

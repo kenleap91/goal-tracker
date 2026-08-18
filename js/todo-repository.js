@@ -16,7 +16,8 @@
       done: row.done,
       createdAt: row.created_at,
       doneAt: row.done_at,
-      position: row.position
+      position: row.position,
+      dueDate: row.due_date
     };
   }
 
@@ -46,9 +47,10 @@
     var title = (input && input.title || '').trim();
     var listType = (input && input.listType) || 'shared';
     var position = (input && input.position) || 0;
+    var dueDate = (input && input.dueDate) || null;
     return this.client
       .from(TODOS_TABLE)
-      .insert({ list_type: listType, title: title, created_by: this.userId, position: position })
+      .insert({ list_type: listType, title: title, created_by: this.userId, position: position, due_date: dueDate })
       .select()
       .single()
       .then(function (res) {
@@ -61,6 +63,7 @@
     var patch = {};
     if (input.title != null) patch.title = input.title.trim();
     if (input.listType != null) patch.list_type = input.listType;
+    if (input.dueDate !== undefined) patch.due_date = input.dueDate || null;
     return this.client
       .from(TODOS_TABLE)
       .update(patch)

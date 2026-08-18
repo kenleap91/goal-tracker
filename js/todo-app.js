@@ -14,6 +14,23 @@
     return node;
   }
 
+  // Days from today (local) until dateStr (yyyy-mm-dd). Negative = overdue.
+  function daysUntil(dateStr) {
+    var today = new Date();
+    var todayDay = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+    var parts = dateStr.split('-').map(Number);
+    var target = new Date(parts[0], parts[1] - 1, parts[2]);
+    return Math.round((target - todayDay) / 86400000);
+  }
+
+  function dueDateLabel(dateStr) {
+    var diff = daysUntil(dateStr);
+    var mmdd = dateStr.slice(5).replace('-', '/');
+    if (diff < 0) return mmdd + '(期限切れ)';
+    if (diff === 0) return mmdd + '(今日まで)';
+    return mmdd + '(あと' + diff + '日)';
+  }
+
   function TodoApp(repo) {
     this.repo = repo;
     this.todos = [];
@@ -33,6 +50,7 @@
       form: document.getElementById('add-todo-form'),
       titleInput: document.getElementById('todo-title-input'),
       listPicker: document.getElementById('todo-list-picker'),
+      dueDateInput: document.getElementById('todo-due-date-input'),
       cancelBtn: document.getElementById('todo-cancel-btn'),
 
       csvBtn: document.getElementById('todo-csv-btn')
@@ -100,6 +118,7 @@
     this.dom.heading.textContent = todo ? 'ToDoを編集' : '新しいToDo';
     this.dom.submitBtn.textContent = todo ? '保存' : '追加';
     this.dom.titleInput.value = todo ? todo.title : '';
+    this.dom.dueDateInput.value = todo && todo.dueDate ? todo.dueDate : '';
     this.selectedListType = todo ? todo.listType : this.activeList;
     Array.prototype.forEach.call(this.dom.listPicker.children, function (b) {
       b.classList.toggle('selected', b.getAttribute('data-list') === this.selectedListType);
@@ -112,12 +131,14 @@
     var self = this;
     var title = this.dom.titleInput.value.trim();
     if (!title) return;
+    var dueDate = this.dom.dueDateInput.value || null;
 
     if (this.editingId) {
       var todo = this.todos.find(function (t) { return t.id === self.editingId; });
-      this.repo.updateTodo(this.editingId, { title: title, listType: this.selectedListType }).then(function () {
+      this.repo.updateTodo(this.editingId, { title: title, listType: this.selectedListType, dueDate: dueDate }).then(function () {
         todo.title = title;
         todo.listType = self.selectedListType;
+        todo.dueDate = dueDate;
         self.dom.dialog.close();
         self.render();
       });
@@ -127,7 +148,7 @@
     var maxPosition = this.todos
       .filter(function (t) { return t.listType === self.selectedListType; })
       .reduce(function (max, t) { return Math.max(max, t.position || 0); }, 0);
-    this.repo.addTodo({ title: title, listType: this.selectedListType, position: maxPosition + 10 }).then(function (created) {
+    this.repo.addTodo({ title: title, listType: this.selectedListType, position: maxPosition + 10, dueDate: dueDate }).then(function (created) {
       self.todos.push(created);
       self.dom.dialog.close();
       self.render();
@@ -180,11 +201,18 @@
     });
     row.appendChild(check);
 
+    var body = el('span', 'todo-body');
     var title = el('span', 'todo-title', todo.title);
-    title.addEventListener('click', function () {
+    body.appendChild(title);
+    if (todo.dueDate) {
+      var diff = daysUntil(todo.dueDate);
+      var badgeClass = 'todo-due-badge' + (diff <= 3 ? ' urgent' : '');
+      body.appendChild(el('span', badgeClass, dueDateLabel(todo.dueDate)));
+    }
+    body.addEventListener('click', function () {
       self.openDialog(todo);
     });
-    row.appendChild(title);
+    row.appendChild(body);
 
     var del = el('button', 'todo-delete', '×');
     del.type = 'button';
@@ -218,9 +246,9 @@
   }
 
   TodoApp.prototype.exportCsv = function () {
-    var header = ['リスト', '内容', '完了', '作成日時', '完了日時'];
+    var header = ['リスト', '内容', '期限日', '完了', '作成日時', '完了日時'];
     var rows = [header].concat(this.todos.map(function (t) {
-      return [LIST_LABELS[t.listType] || t.listType, t.title, t.done ? '1' : '0', t.createdAt || '', t.doneAt || ''];
+      return [LIST_LABELS[t.listType] || t.listType, t.title, t.dueDate || '', t.done ? '1' : '0', t.createdAt || '', t.doneAt || ''];
     }));
     var csv = rows.map(function (row) {
       return row.map(csvField).join(',');

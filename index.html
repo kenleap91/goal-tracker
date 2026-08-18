@@ -34,6 +34,18 @@
     <h1 class="home-title">浪治家 🏠</h1>
     <button id="logout-btn" class="icon-btn" aria-label="ログアウト" title="ログアウト">⎋</button>
   </header>
+  <div id="home-dashboard" class="home-dashboard" hidden>
+    <h2 class="dashboard-title">ダッシュボード</h2>
+    <div id="dashboard-todo-group" class="dashboard-group" hidden>
+      <h3 class="dashboard-group-title">期限が近いToDo</h3>
+      <ul id="dashboard-todo-list" class="dashboard-list"></ul>
+    </div>
+    <div id="dashboard-chore-group" class="dashboard-group" hidden>
+      <h3 class="dashboard-group-title">実施が近い家事</h3>
+      <ul id="dashboard-chore-list" class="dashboard-list"></ul>
+    </div>
+  </div>
+
   <div class="home-cards">
     <button class="home-card" data-section="todo">
       <span class="home-card-icon" aria-hidden="true">✅</span>
@@ -255,6 +267,10 @@
       <button type="button" class="list-option" data-list="ken">Ken</button>
       <button type="button" class="list-option" data-list="nao">Nao</button>
     </div>
+    <label class="field-label">
+      期限日(任意)
+      <input type="date" id="todo-due-date-input">
+    </label>
     <div class="dialog-actions">
       <button type="button" id="todo-cancel-btn" class="btn-secondary">キャンセル</button>
       <button type="submit" id="todo-dialog-submit-btn" class="btn-primary">追加</button>
@@ -269,6 +285,10 @@
       場所・項目
       <input type="text" id="chore-name-input" required maxlength="40" placeholder="例: お風呂" autocomplete="off">
     </label>
+    <label class="field-label">
+      次回実施日(任意)
+      <input type="date" id="chore-next-due-input">
+    </label>
     <div class="dialog-actions">
       <button type="button" id="chore-cancel-btn" class="btn-secondary">キャンセル</button>
       <button type="submit" class="btn-primary">追加</button>
@@ -282,6 +302,10 @@
     <label class="field-label">
       実施日
       <input type="date" id="chore-date-input">
+    </label>
+    <label class="field-label">
+      次回実施日(任意)
+      <input type="date" id="chore-next-due-edit-input">
     </label>
     <div class="dialog-actions">
       <button type="button" id="chore-date-clear-btn" class="btn-danger">未実施に戻す</button>
