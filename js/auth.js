@@ -15,10 +15,15 @@
     return client.auth.getSession().then(function (res) { return res.data.session; });
   }
 
+  // shouldCreateUser: false means only pre-registered accounts (Ken/Nao,
+  // created directly in the Supabase dashboard) can request a login code.
+  // Anyone else's email is rejected instead of silently creating a new
+  // account, since the household data (assets included) is open to any
+  // signed-in user once inside.
   function sendMagicLink(email) {
     return client.auth.signInWithOtp({
       email: email,
-      options: { emailRedirectTo: global.location.origin }
+      options: { emailRedirectTo: global.location.origin, shouldCreateUser: false }
     }).then(function (res) {
       if (res.error) throw res.error;
     });
