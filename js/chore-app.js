@@ -164,12 +164,15 @@
     this.dom.dateInput.value = toDateInputValue(chore.lastDoneAt);
     this.dom.nextDueEditInput.value = chore.nextDueDate || '';
     this.dom.dateDialog.showModal();
-    // <dialog> auto-focuses its first focusable control, which on mobile
-    // pops the native date picker open instantly — before the user can
-    // see which field (実施日 vs 次回実施日) they're even looking at.
-    // Blur it so the picker only opens once they deliberately tap a field.
-    if (document.activeElement && document.activeElement.blur) {
-      document.activeElement.blur();
+    // The dialog heading has autofocus (see index.html) so the browser
+    // lands there instead of the first date field — landing on a date
+    // field pops the native picker open instantly on mobile, before the
+    // user can see which field (実施日 vs 次回実施日) they're even
+    // looking at. Belt-and-suspenders: if some browser ignores that and
+    // focuses a date field anyway, blur it back off.
+    var active = document.activeElement;
+    if (active === this.dom.dateInput || active === this.dom.nextDueEditInput) {
+      active.blur();
     }
   };
 
