@@ -164,6 +164,13 @@
     this.dom.dateInput.value = toDateInputValue(chore.lastDoneAt);
     this.dom.nextDueEditInput.value = chore.nextDueDate || '';
     this.dom.dateDialog.showModal();
+    // <dialog> auto-focuses its first focusable control, which on mobile
+    // pops the native date picker open instantly — before the user can
+    // see which field (実施日 vs 次回実施日) they're even looking at.
+    // Blur it so the picker only opens once they deliberately tap a field.
+    if (document.activeElement && document.activeElement.blur) {
+      document.activeElement.blur();
+    }
   };
 
   ChoreApp.prototype.handleDateSubmit = function () {
