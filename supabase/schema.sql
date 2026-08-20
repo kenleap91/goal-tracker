@@ -90,3 +90,22 @@ alter table goal_tracker_assets add column position integer not null default 0;
 -- Due dates for the home-screen dashboard (todos due soon / chores due soon).
 alter table goal_tracker_todos add column due_date date;
 alter table goal_tracker_chores add column next_due_date date;
+
+-- Shared household shopping list (groceries / daily necessities). Same
+-- sharing model as todos/chores: RLS stays open to any authenticated user.
+create table goal_tracker_shopping_items (
+  id uuid primary key default gen_random_uuid(),
+  category text not null check (category in ('food', 'daily')),
+  name text not null,
+  quantity text,
+  bought boolean not null default false,
+  position integer not null default 0,
+  created_by uuid not null references auth.users(id) on delete cascade,
+  created_at timestamptz not null default now(),
+  bought_at timestamptz
+);
+
+alter table goal_tracker_shopping_items enable row level security;
+
+create policy "household shopping items" on goal_tracker_shopping_items
+  for all to authenticated using (true) with check (true);

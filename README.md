@@ -46,6 +46,12 @@ js/storage.js            LocalStorageRepository(移行用に残置)
 js/server-repository.js  ServerRepository(Supabase Postgresへの読み書き)
 js/streaks.js            日付・連続日数の計算ロジック(ピュア関数)
 js/app.js                画面描画とイベント処理
+js/todo-repository.js    ToDoのSupabase読み書き
+js/todo-app.js           ToDo画面の描画とイベント処理
+js/chore-repository.js   家事履歴のSupabase読み書き
+js/chore-app.js          家事履歴画面の描画とイベント処理
+js/shopping-repository.js 買うものリストのSupabase読み書き
+js/shopping-app.js       買うものリスト画面の描画とイベント処理
 js/main.js               起動処理(認証ゲート・ローカルデータ移行)
 supabase/schema.sql      テーブル定義・RLSポリシー
 ```

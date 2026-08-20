@@ -8,7 +8,8 @@
     goal: document.getElementById('goal-section'),
     todo: document.getElementById('todo-section'),
     chores: document.getElementById('chores-section'),
-    assets: document.getElementById('assets-section')
+    assets: document.getElementById('assets-section'),
+    shopping: document.getElementById('shopping-section')
   };
   var sectionApps = {};
   var client = null;
@@ -193,6 +194,9 @@
     } else if (key === 'chores') {
       repo = new G.ChoreRepository(client, userId);
       appInstance = new G.ChoreApp(repo);
+    } else if (key === 'shopping') {
+      repo = new G.ShoppingRepository(client, userId);
+      appInstance = new G.ShoppingApp(repo);
     } else {
       repo = new G.AssetRepository(client, userId);
       appInstance = new G.AssetApp(repo);

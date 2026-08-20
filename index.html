@@ -63,6 +63,10 @@
       <span class="home-card-icon" aria-hidden="true">💰</span>
       <span class="home-card-label">資産管理</span>
     </button>
+    <button class="home-card" data-section="shopping">
+      <span class="home-card-icon" aria-hidden="true">🛒</span>
+      <span class="home-card-label">買うものリスト</span>
+    </button>
   </div>
 </div>
 
@@ -194,6 +198,26 @@
   <button id="add-asset-btn" class="fab" aria-label="資産を追加">+</button>
 </div>
 
+<div id="shopping-section" class="section" hidden>
+
+  <header class="app-header">
+    <button class="icon-btn back-btn" data-back aria-label="ホームに戻る">‹ ホーム</button>
+    <h1 class="section-title">買うものリスト</h1>
+  </header>
+
+  <nav class="tabs">
+    <button class="tab-btn active" data-category="food">食材</button>
+    <button class="tab-btn" data-category="daily">日用品</button>
+  </nav>
+
+  <main>
+    <ul id="shopping-list" class="activity-list todo-list"></ul>
+    <p id="shopping-empty" class="empty-state" hidden>まだ買うものがありません。右下の + から追加しましょう。</p>
+  </main>
+
+  <button id="add-shopping-btn" class="fab" aria-label="買うものを追加">+</button>
+</div>
+
 <dialog id="add-activity-dialog">
   <form id="add-activity-form">
     <h2>新しい目標</h2>
@@ -274,6 +298,29 @@
     <div class="dialog-actions">
       <button type="button" id="todo-cancel-btn" class="btn-secondary">キャンセル</button>
       <button type="submit" id="todo-dialog-submit-btn" class="btn-primary">追加</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog id="add-shopping-dialog">
+  <form id="add-shopping-form">
+    <h2 id="shopping-dialog-heading">新しい買うもの</h2>
+    <label class="field-label">
+      内容
+      <input type="text" id="shopping-name-input" required maxlength="60" placeholder="例: 牛乳" autocomplete="off">
+    </label>
+    <p class="field-label">カテゴリ</p>
+    <div class="list-picker" id="shopping-category-picker">
+      <button type="button" class="list-option selected" data-category="food">食材</button>
+      <button type="button" class="list-option" data-category="daily">日用品</button>
+    </div>
+    <label class="field-label">
+      数量(任意)
+      <input type="text" id="shopping-quantity-input" maxlength="20" placeholder="例: 2本" autocomplete="off">
+    </label>
+    <div class="dialog-actions">
+      <button type="button" id="shopping-cancel-btn" class="btn-secondary">キャンセル</button>
+      <button type="submit" id="shopping-dialog-submit-btn" class="btn-primary">追加</button>
     </div>
   </form>
 </dialog>
@@ -385,12 +432,14 @@
 <script src="js/todo-repository.js"></script>
 <script src="js/chore-repository.js"></script>
 <script src="js/asset-repository.js"></script>
+<script src="js/shopping-repository.js"></script>
 <script src="js/price-service.js"></script>
 <script src="js/drag-reorder.js"></script>
 <script src="js/app.js"></script>
 <script src="js/todo-app.js"></script>
 <script src="js/chore-app.js"></script>
 <script src="js/asset-app.js"></script>
+<script src="js/shopping-app.js"></script>
 <script src="js/main.js"></script>
 </body>
 </html>
