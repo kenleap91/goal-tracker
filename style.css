@@ -261,6 +261,109 @@ body {
   border-radius: 999px;
 }
 
+/* Shopping list — Notes-app style inline editing + swipe to delete */
+.shopping-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.shopping-row {
+  position: relative;
+  border-radius: 14px;
+  overflow: hidden;
+}
+.shopping-row-delete-bg {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  justify-content: flex-end;
+  align-items: stretch;
+  background: #e0453f;
+}
+.shopping-row-delete-btn {
+  width: 88px;
+  border: none;
+  background: transparent;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.shopping-row-content {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--card-bg);
+  border-radius: 14px;
+  padding: 12px 14px;
+  touch-action: pan-y;
+}
+.shopping-row.done .shopping-name-input {
+  color: var(--text-muted);
+  text-decoration: line-through;
+}
+.shopping-name-input,
+.shopping-qty-input {
+  border: none;
+  background: transparent;
+  font-family: inherit;
+  padding: 0;
+}
+.shopping-name-input {
+  flex: 1;
+  min-width: 0;
+  font-size: 15px;
+  color: var(--text);
+}
+.shopping-qty-input {
+  width: 64px;
+  flex-shrink: 0;
+  font-size: 13px;
+  color: var(--text-muted);
+  text-align: right;
+}
+.shopping-qty-input:focus {
+  color: var(--text);
+}
+.shopping-name-input:focus,
+.shopping-qty-input:focus {
+  outline: none;
+}
+.shopping-add-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  margin-top: 10px;
+}
+.shopping-add-icon {
+  color: var(--accent);
+  font-size: 18px;
+  font-weight: 700;
+  width: 18px;
+  text-align: center;
+}
+.shopping-add-input {
+  flex: 1;
+  border: none;
+  background: transparent;
+  font-family: inherit;
+  font-size: 15px;
+  color: var(--text);
+  padding: 0;
+}
+.shopping-add-input:focus {
+  outline: none;
+}
+.shopping-add-input::placeholder {
+  color: var(--text-muted);
+}
+
 /* Drag-to-reorder */
 .drag-handle {
   color: var(--text-muted);
@@ -273,7 +376,8 @@ body {
 }
 .todo-row.dragging,
 .chore-row.dragging,
-.asset-row.dragging {
+.asset-row.dragging,
+.shopping-row.dragging {
   box-shadow: 0 6px 16px rgba(0, 0, 0, 0.18);
   cursor: grabbing;
 }
@@ -871,9 +975,7 @@ dialog h2 {
 #asset-name-input,
 #asset-symbol-input,
 #asset-quantity-input,
-#asset-amount-input,
-#shopping-name-input,
-#shopping-quantity-input {
+#asset-amount-input {
   width: 100%;
   font-size: 16px;
   padding: 10px 12px;

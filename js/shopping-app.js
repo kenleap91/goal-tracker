@@ -1,12 +1,12 @@
 /**
- * UI layer for the shared household shopping list. Mirrors the structure
- * of todo-app.js (repo-backed, plain DOM rendering) but scoped to
- * groceries / daily items, with a quantity field instead of a due date.
+ * UI layer for the shared household shopping list ("買うものリスト").
+ * Deliberately modeled on the Notes/Reminders checklist feel rather than
+ * the ToDo section's dialog-based add/edit: an always-visible input row
+ * for adding, tap-anywhere-on-the-text inline editing (the "row" is just a
+ * borderless <input>), and swipe-to-delete instead of a visible × button.
  */
 (function (global) {
   'use strict';
-
-  var CATEGORY_LABELS = { food: '食材', daily: '日用品' };
 
   function el(tag, className, text) {
     var node = document.createElement(tag);
@@ -19,23 +19,11 @@
     this.repo = repo;
     this.items = [];
     this.activeCategory = 'food';
-    this.selectedCategory = 'food';
-    this.editingId = null;
 
     this.dom = {
       tabBtns: Array.prototype.slice.call(document.querySelectorAll('#shopping-section .tab-btn')),
       list: document.getElementById('shopping-list'),
-      empty: document.getElementById('shopping-empty'),
-
-      addBtn: document.getElementById('add-shopping-btn'),
-      dialog: document.getElementById('add-shopping-dialog'),
-      heading: document.getElementById('shopping-dialog-heading'),
-      submitBtn: document.getElementById('shopping-dialog-submit-btn'),
-      form: document.getElementById('add-shopping-form'),
-      nameInput: document.getElementById('shopping-name-input'),
-      categoryPicker: document.getElementById('shopping-category-picker'),
-      quantityInput: document.getElementById('shopping-quantity-input'),
-      cancelBtn: document.getElementById('shopping-cancel-btn')
+      addInput: document.getElementById('shopping-add-input')
     };
   }
 
@@ -44,6 +32,11 @@
     this.bindEvents();
     global.GoalTracker.enableDragReorder(this.dom.list, '.drag-handle', function (ids) {
       self.persistOrder(ids);
+    });
+    global.GoalTracker.enableSwipeDelete(this.dom.list, '.shopping-row-content', '.shopping-row-delete-btn', function (row) {
+      var id = row.getAttribute('data-id');
+      var item = self.items.find(function (t) { return t.id === id; });
+      if (item) self.deleteItem(item);
     });
     return this.loadData().then(function () {
       self.render();
@@ -66,70 +59,32 @@
         self.dom.tabBtns.forEach(function (b) {
           b.classList.toggle('active', b === btn);
         });
+        self.dom.addInput.value = '';
         self.render();
       });
     });
 
-    this.dom.addBtn.addEventListener('click', function () {
-      self.openDialog();
-    });
-    this.dom.cancelBtn.addEventListener('click', function () {
-      self.dom.dialog.close();
-    });
-    this.dom.form.addEventListener('submit', function (e) {
+    this.dom.addInput.addEventListener('keydown', function (e) {
+      if (e.key !== 'Enter') return;
       e.preventDefault();
-      self.handleFormSubmit();
-    });
-    Array.prototype.forEach.call(this.dom.categoryPicker.children, function (btn) {
-      btn.addEventListener('click', function () {
-        self.selectedCategory = btn.getAttribute('data-category');
-        Array.prototype.forEach.call(self.dom.categoryPicker.children, function (b) {
-          b.classList.toggle('selected', b === btn);
-        });
-      });
+      self.submitAdd();
     });
   };
 
-  // Pass an item to edit it; call with no argument to add a new one.
-  ShoppingApp.prototype.openDialog = function (item) {
-    this.editingId = item ? item.id : null;
-    this.dom.heading.textContent = item ? '買うものを編集' : '新しい買うもの';
-    this.dom.submitBtn.textContent = item ? '保存' : '追加';
-    this.dom.nameInput.value = item ? item.name : '';
-    this.dom.quantityInput.value = item && item.quantity ? item.quantity : '';
-    this.selectedCategory = item ? item.category : this.activeCategory;
-    Array.prototype.forEach.call(this.dom.categoryPicker.children, function (b) {
-      b.classList.toggle('selected', b.getAttribute('data-category') === this.selectedCategory);
-    }, this);
-    this.dom.dialog.showModal();
-    this.dom.nameInput.focus();
-  };
-
-  ShoppingApp.prototype.handleFormSubmit = function () {
+  ShoppingApp.prototype.submitAdd = function () {
     var self = this;
-    var name = this.dom.nameInput.value.trim();
+    var name = this.dom.addInput.value.trim();
     if (!name) return;
-    var quantity = this.dom.quantityInput.value.trim() || null;
-
-    if (this.editingId) {
-      var item = this.items.find(function (t) { return t.id === self.editingId; });
-      this.repo.updateItem(this.editingId, { name: name, category: this.selectedCategory, quantity: quantity }).then(function () {
-        item.name = name;
-        item.category = self.selectedCategory;
-        item.quantity = quantity;
-        self.dom.dialog.close();
-        self.render();
-      });
-      return;
-    }
-
     var maxPosition = this.items
-      .filter(function (t) { return t.category === self.selectedCategory; })
+      .filter(function (t) { return t.category === self.activeCategory; })
       .reduce(function (max, t) { return Math.max(max, t.position || 0); }, 0);
-    this.repo.addItem({ name: name, category: this.selectedCategory, position: maxPosition + 10, quantity: quantity }).then(function (created) {
+    this.dom.addInput.value = '';
+    this.repo.addItem({ name: name, category: this.activeCategory, position: maxPosition + 10 }).then(function (created) {
       self.items.push(created);
-      self.dom.dialog.close();
       self.render();
+      // Keeps focus on the (now-recreated) add row so the user can keep
+      // typing items one after another, same as Notes' checklist.
+      self.dom.addInput.focus();
     });
   };
 
@@ -145,8 +100,6 @@
 
   ShoppingApp.prototype.deleteItem = function (item) {
     var self = this;
-    var ok = confirm('「' + item.name + '」を削除しますか?');
-    if (!ok) return;
     this.repo.deleteItem(item.id).then(function () {
       self.items = self.items.filter(function (t) { return t.id !== item.id; });
       self.render();
@@ -163,12 +116,37 @@
     });
   };
 
+  ShoppingApp.prototype.saveName = function (item, value) {
+    var name = value.trim();
+    if (!name) { this.render(); return; }
+    if (name === item.name) return;
+    this.repo.updateItem(item.id, { name: name }).then(function () {
+      item.name = name;
+    });
+  };
+
+  ShoppingApp.prototype.saveQuantity = function (item, value) {
+    var quantity = value.trim() || null;
+    if (quantity === item.quantity) return;
+    this.repo.updateItem(item.id, { quantity: quantity }).then(function () {
+      item.quantity = quantity;
+    });
+  };
+
   ShoppingApp.prototype.buildRow = function (item) {
     var self = this;
-    var row = el('li', 'todo-row' + (item.bought ? ' done' : ''));
+    var row = el('li', 'shopping-row' + (item.bought ? ' done' : ''));
     row.setAttribute('data-id', item.id);
 
-    row.appendChild(el('span', 'drag-handle', '⠿'));
+    var deleteBg = el('div', 'shopping-row-delete-bg');
+    var deleteBtn = el('button', 'shopping-row-delete-btn', '削除');
+    deleteBtn.type = 'button';
+    deleteBg.appendChild(deleteBtn);
+    row.appendChild(deleteBg);
+
+    var content = el('div', 'shopping-row-content');
+
+    content.appendChild(el('span', 'drag-handle', '⠿'));
 
     var check = el('button', 'todo-check');
     check.type = 'button';
@@ -177,27 +155,34 @@
     check.addEventListener('click', function () {
       self.toggleBought(item);
     });
-    row.appendChild(check);
+    content.appendChild(check);
 
-    var body = el('span', 'todo-body');
-    var title = el('span', 'todo-title', item.name);
-    body.appendChild(title);
-    if (item.quantity) {
-      body.appendChild(el('span', 'todo-due-badge', item.quantity));
-    }
-    body.addEventListener('click', function () {
-      self.openDialog(item);
+    var nameInput = el('input', 'shopping-name-input');
+    nameInput.type = 'text';
+    nameInput.value = item.name;
+    nameInput.maxLength = 60;
+    nameInput.addEventListener('blur', function () {
+      self.saveName(item, nameInput.value);
     });
-    row.appendChild(body);
-
-    var del = el('button', 'todo-delete', '×');
-    del.type = 'button';
-    del.setAttribute('aria-label', '削除');
-    del.addEventListener('click', function () {
-      self.deleteItem(item);
+    nameInput.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter') { e.preventDefault(); nameInput.blur(); }
     });
-    row.appendChild(del);
+    content.appendChild(nameInput);
 
+    var qtyInput = el('input', 'shopping-qty-input');
+    qtyInput.type = 'text';
+    qtyInput.placeholder = '数量';
+    qtyInput.maxLength = 20;
+    qtyInput.value = item.quantity || '';
+    qtyInput.addEventListener('blur', function () {
+      self.saveQuantity(item, qtyInput.value);
+    });
+    qtyInput.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter') { e.preventDefault(); qtyInput.blur(); }
+    });
+    content.appendChild(qtyInput);
+
+    row.appendChild(content);
     return row;
   };
 
@@ -207,7 +192,6 @@
       .filter(function (t) { return t.category === self.activeCategory; })
       .sort(function (a, b) { return (a.position || 0) - (b.position || 0); });
     this.dom.list.innerHTML = '';
-    this.dom.empty.hidden = visible.length > 0;
     visible.forEach(function (item) {
       self.dom.list.appendChild(self.buildRow(item));
     });
