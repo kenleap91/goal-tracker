@@ -832,6 +832,15 @@ dialog {
   border-radius: 18px;
   padding: 24px;
   width: min(400px, 90vw);
+  max-height: 85vh;
+  overflow-y: auto;
+  /* Anchored near the top instead of vertically centered: when the
+     iOS keyboard opens, a centered dialog has to recompute its offset
+     against the shrinking visual viewport, which briefly leaves the
+     action buttons rendered under the keyboard's accessory bar. A
+     fixed top offset barely has to move, so it settles immediately. */
+  margin-top: 8vh;
+  margin-bottom: auto;
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.25);
 }
 dialog::backdrop {
