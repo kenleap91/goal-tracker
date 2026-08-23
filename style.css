@@ -3,7 +3,7 @@
 }
 
 :root {
-  --bg: #eeeeee;
+  --bg: oklch(98% 0.006 90);
   --card-bg: #ffffff;
   --text: #1a1a1a;
   --text-muted: #8a8a8a;
@@ -13,7 +13,7 @@
 
 body {
   margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Yu Gothic", sans-serif;
+  font-family: "Kosugi Maru", "Hiragino Maru Gothic ProN", -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Yu Gothic", sans-serif;
   background: var(--bg);
   color: var(--text);
 }
@@ -61,16 +61,32 @@ body {
   gap: 16px;
   background: var(--card-bg);
   border: none;
-  border-radius: 18px;
-  padding: 22px 20px;
+  border-radius: 24px;
+  padding: 20px;
   cursor: pointer;
   box-shadow: 0 3px 10px rgba(0, 0, 0, 0.06);
 }
 .home-card-icon {
-  font-size: 28px;
+  width: 46px;
+  height: 46px;
+  min-width: 46px;
+  border-radius: 999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
 }
+/* Each section gets its own soft accent so the 5 destinations read apart
+   at a glance. Kenのルーティン uses teal rather than the warmer peach the
+   other tones lean toward — the 🏃 emoji's own skin tone got lost against
+   an orange badge. */
+.home-card--shopping .home-card-icon { background: oklch(85% 0.11 150); }
+.home-card--todo .home-card-icon { background: oklch(85% 0.09 230); }
+.home-card--chores .home-card-icon { background: oklch(85% 0.09 300); }
+.home-card--routine .home-card-icon { background: oklch(85% 0.09 190); }
+.home-card--assets .home-card-icon { background: oklch(85% 0.11 95); }
 .home-card-label {
-  font-size: 18px;
+  font-size: 17px;
   font-weight: 700;
   color: var(--text);
 }
@@ -79,8 +95,8 @@ body {
 .home-dashboard {
   margin: 20px 16px 0;
   background: var(--card-bg);
-  border-radius: 18px;
-  padding: 16px 18px;
+  border-radius: 24px;
+  padding: 18px 20px;
   box-shadow: 0 3px 10px rgba(0, 0, 0, 0.06);
 }
 .dashboard-title {
@@ -142,7 +158,7 @@ body {
   align-items: center;
   gap: 12px;
   background: var(--card-bg);
-  border-radius: 14px;
+  border-radius: 18px;
   padding: 12px 14px;
 }
 .todo-check {
@@ -237,7 +253,7 @@ body {
   align-items: center;
   gap: 12px;
   background: var(--card-bg);
-  border-radius: 14px;
+  border-radius: 18px;
   padding: 14px 16px;
 }
 .chore-info {
@@ -275,7 +291,7 @@ body {
   align-items: center;
   gap: 10px;
   background: var(--card-bg);
-  border-radius: 14px;
+  border-radius: 18px;
   padding: 12px 14px;
 }
 .shopping-row.done .shopping-name-input {
@@ -415,7 +431,7 @@ body {
   align-items: center;
   gap: 12px;
   background: var(--card-bg);
-  border-radius: 14px;
+  border-radius: 18px;
   padding: 14px 16px;
 }
 .asset-info {
@@ -532,7 +548,7 @@ body {
 .auth-card {
   width: min(360px, 100%);
   background: var(--card-bg);
-  border-radius: 20px;
+  border-radius: 24px;
   padding: 28px 24px;
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.12);
   text-align: center;
@@ -826,7 +842,7 @@ main {
 }
 .stats-card {
   background: var(--card-bg);
-  border-radius: 16px;
+  border-radius: 20px;
   padding: 16px;
   cursor: pointer;
 }
@@ -894,7 +910,7 @@ main {
 /* Dialogs */
 dialog {
   border: none;
-  border-radius: 18px;
+  border-radius: 22px;
   padding: 24px;
   width: min(400px, 90vw);
   max-height: 85vh;
