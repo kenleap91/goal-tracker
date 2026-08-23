@@ -161,14 +161,6 @@
     });
   };
 
-  ShoppingApp.prototype.saveQuantity = function (item, value) {
-    var quantity = value.trim() || null;
-    if (quantity === item.quantity) return;
-    this.repo.updateItem(item.id, { quantity: quantity }).then(function () {
-      item.quantity = quantity;
-    });
-  };
-
   ShoppingApp.prototype.buildRow = function (item) {
     var self = this;
     var row = el('li', 'shopping-row' + (item.bought ? ' done' : ''));
@@ -197,20 +189,7 @@
     });
     row.appendChild(nameInput);
 
-    var qtyInput = el('input', 'shopping-qty-input');
-    qtyInput.type = 'text';
-    qtyInput.placeholder = '数量';
-    qtyInput.maxLength = 20;
-    qtyInput.value = item.quantity || '';
-    qtyInput.addEventListener('blur', function () {
-      self.saveQuantity(item, qtyInput.value);
-    });
-    qtyInput.addEventListener('keydown', function (e) {
-      if (e.key === 'Enter') { e.preventDefault(); qtyInput.blur(); }
-    });
-    row.appendChild(qtyInput);
-
-    var del = el('button', 'shopping-delete', '🗑️');
+    var del = el('button', 'todo-delete', '×');
     del.type = 'button';
     del.setAttribute('aria-label', '削除');
     del.addEventListener('click', function () {

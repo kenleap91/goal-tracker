@@ -278,44 +278,21 @@ body {
   border-radius: 14px;
   padding: 12px 14px;
 }
-.shopping-delete {
-  background: none;
-  border: none;
-  font-size: 16px;
-  cursor: pointer;
-  padding: 0 4px;
-  line-height: 1;
-  flex-shrink: 0;
-}
 .shopping-row.done .shopping-name-input {
   color: var(--text-muted);
   text-decoration: line-through;
 }
-.shopping-name-input,
-.shopping-qty-input {
+.shopping-name-input {
+  flex: 1;
+  min-width: 0;
   border: none;
   background: transparent;
   font-family: inherit;
   padding: 0;
-}
-.shopping-name-input {
-  flex: 1;
-  min-width: 0;
   font-size: 15px;
   color: var(--text);
 }
-.shopping-qty-input {
-  width: 64px;
-  flex-shrink: 0;
-  font-size: 13px;
-  color: var(--text-muted);
-  text-align: right;
-}
-.shopping-qty-input:focus {
-  color: var(--text);
-}
-.shopping-name-input:focus,
-.shopping-qty-input:focus {
+.shopping-name-input:focus {
   outline: none;
 }
 .shopping-add-row {
