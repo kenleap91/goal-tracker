@@ -16,6 +16,14 @@
     return node;
   }
 
+  // Unbought items sort to the top (in position order); bought items sink
+  // below them (also in position order), so the list keeps showing what's
+  // still left to buy without the checked-off items in the way.
+  function compareItems(a, b) {
+    if (a.bought !== b.bought) return a.bought ? 1 : -1;
+    return (a.position || 0) - (b.position || 0);
+  }
+
   function ShoppingApp(repo) {
     this.repo = repo;
     this.items = [];
@@ -71,7 +79,7 @@
     var rowEl = this.buildRow(item);
     var insertBefore = Array.prototype.find.call(this.dom.list.children, function (li) {
       var sibling = self.items.find(function (t) { return t.id === li.getAttribute('data-id'); });
-      return sibling && (sibling.position || 0) > (item.position || 0);
+      return sibling && compareItems(item, sibling) < 0;
     });
     if (insertBefore) this.dom.list.insertBefore(rowEl, insertBefore);
     else this.dom.list.appendChild(rowEl);
@@ -204,7 +212,7 @@
     var self = this;
     var visible = this.items
       .filter(function (t) { return t.category === self.activeCategory; })
-      .sort(function (a, b) { return (a.position || 0) - (b.position || 0); });
+      .sort(compareItems);
     this.dom.list.innerHTML = '';
     visible.forEach(function (item) {
       self.dom.list.appendChild(self.buildRow(item));
