@@ -88,9 +88,23 @@
     global.GoalTracker.enableDragReorder(this.dom.list, '.drag-handle', function (ids) {
       self.persistOrder(ids);
     });
+    this.repo.subscribeToChanges(function (change) {
+      self.applyRemoteChange(change);
+    });
     return this.loadData().then(function () {
       self.render();
     });
+  };
+
+  ChoreApp.prototype.applyRemoteChange = function (change) {
+    if (change.eventType === 'DELETE') {
+      this.chores = this.chores.filter(function (c) { return c.id !== change.oldId; });
+    } else {
+      var idx = this.chores.findIndex(function (c) { return c.id === change.newItem.id; });
+      if (idx >= 0) this.chores[idx] = change.newItem;
+      else this.chores.push(change.newItem);
+    }
+    this.render();
   };
 
   ChoreApp.prototype.loadData = function () {

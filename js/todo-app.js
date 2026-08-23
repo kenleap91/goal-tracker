@@ -63,9 +63,26 @@
     global.GoalTracker.enableDragReorder(this.dom.list, '.drag-handle', function (ids) {
       self.persistOrder(ids);
     });
+    this.repo.subscribeToChanges(function (change) {
+      self.applyRemoteChange(change);
+    });
     return this.loadData().then(function () {
       self.render();
     });
+  };
+
+  // Handles another household member's edit arriving over Supabase
+  // Realtime. The dialog (if open) lives outside #todo-list, so a full
+  // re-render here can't clobber anything the user is mid-typing.
+  TodoApp.prototype.applyRemoteChange = function (change) {
+    if (change.eventType === 'DELETE') {
+      this.todos = this.todos.filter(function (t) { return t.id !== change.oldId; });
+    } else {
+      var idx = this.todos.findIndex(function (t) { return t.id === change.newItem.id; });
+      if (idx >= 0) this.todos[idx] = change.newItem;
+      else this.todos.push(change.newItem);
+    }
+    this.render();
   };
 
   TodoApp.prototype.loadData = function () {

@@ -109,3 +109,12 @@ alter table goal_tracker_shopping_items enable row level security;
 
 create policy "household shopping items" on goal_tracker_shopping_items
   for all to authenticated using (true) with check (true);
+
+-- Realtime: lets both household members' screens pick up each other's
+-- writes instantly instead of only on next navigation/reload. Each
+-- *-app.js subscribes via its repository's subscribeToChanges().
+alter publication supabase_realtime add table
+  goal_tracker_todos,
+  goal_tracker_chores,
+  goal_tracker_assets,
+  goal_tracker_shopping_items;

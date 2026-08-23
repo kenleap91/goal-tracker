@@ -93,6 +93,19 @@
     }));
   };
 
+  ChoreRepository.prototype.subscribeToChanges = function (onChange) {
+    return this.client
+      .channel(CHORES_TABLE + '_changes')
+      .on('postgres_changes', { event: '*', schema: 'public', table: CHORES_TABLE }, function (payload) {
+        onChange({
+          eventType: payload.eventType,
+          newItem: payload.new && payload.new.id ? toChore(payload.new) : null,
+          oldId: payload.old && payload.old.id
+        });
+      })
+      .subscribe();
+  };
+
   global.GoalTracker = global.GoalTracker || {};
   global.GoalTracker.ChoreRepository = ChoreRepository;
 })(window);

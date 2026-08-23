@@ -2,8 +2,9 @@
  * UI layer for the shared household shopping list ("買うものリスト").
  * Deliberately modeled on the Notes/Reminders checklist feel rather than
  * the ToDo section's dialog-based add/edit: an always-visible input row
- * for adding, tap-anywhere-on-the-text inline editing (the "row" is just a
- * borderless <input>), and swipe-to-delete instead of a visible × button.
+ * for adding, and tap-anywhere-on-the-text inline editing (the "row" is
+ * just a borderless <input>). Deletion uses the same visible button as
+ * the ToDo list, not a swipe gesture.
  */
 (function (global) {
   'use strict';
@@ -33,14 +34,47 @@
     global.GoalTracker.enableDragReorder(this.dom.list, '.drag-handle', function (ids) {
       self.persistOrder(ids);
     });
-    global.GoalTracker.enableSwipeDelete(this.dom.list, '.shopping-row-content', '.shopping-row-delete-btn', function (row) {
-      var id = row.getAttribute('data-id');
-      var item = self.items.find(function (t) { return t.id === id; });
-      if (item) self.deleteItem(item);
+    this.repo.subscribeToChanges(function (change) {
+      self.applyRemoteChange(change);
     });
     return this.loadData().then(function () {
       self.render();
     });
+  };
+
+  // Realtime edits are patched into the DOM row-by-row instead of calling
+  // render() (which rebuilds every row from scratch): unlike ToDo/chores/
+  // assets, editing here happens directly in always-visible inputs inside
+  // the list, so wiping the list would erase whatever the household member
+  // using this screen is mid-typing in an unrelated row.
+  ShoppingApp.prototype.applyRemoteChange = function (change) {
+    var self = this;
+
+    if (change.eventType === 'DELETE') {
+      this.items = this.items.filter(function (t) { return t.id !== change.oldId; });
+      var deleted = this.dom.list.querySelector('[data-id="' + change.oldId + '"]');
+      if (deleted) deleted.remove();
+      return;
+    }
+
+    var item = change.newItem;
+    var idx = this.items.findIndex(function (t) { return t.id === item.id; });
+    if (idx >= 0) this.items[idx] = item;
+    else this.items.push(item);
+
+    if (item.category !== this.activeCategory) return;
+
+    var existing = this.dom.list.querySelector('[data-id="' + item.id + '"]');
+    if (existing && existing.contains(document.activeElement)) return; // don't clobber an active edit
+    if (existing) existing.remove();
+
+    var rowEl = this.buildRow(item);
+    var insertBefore = Array.prototype.find.call(this.dom.list.children, function (li) {
+      var sibling = self.items.find(function (t) { return t.id === li.getAttribute('data-id'); });
+      return sibling && (sibling.position || 0) > (item.position || 0);
+    });
+    if (insertBefore) this.dom.list.insertBefore(rowEl, insertBefore);
+    else this.dom.list.appendChild(rowEl);
   };
 
   ShoppingApp.prototype.loadData = function () {
@@ -100,6 +134,8 @@
 
   ShoppingApp.prototype.deleteItem = function (item) {
     var self = this;
+    var ok = confirm('「' + item.name + '」を削除しますか?');
+    if (!ok) return;
     this.repo.deleteItem(item.id).then(function () {
       self.items = self.items.filter(function (t) { return t.id !== item.id; });
       self.render();
@@ -138,15 +174,7 @@
     var row = el('li', 'shopping-row' + (item.bought ? ' done' : ''));
     row.setAttribute('data-id', item.id);
 
-    var deleteBg = el('div', 'shopping-row-delete-bg');
-    var deleteBtn = el('button', 'shopping-row-delete-btn', '削除');
-    deleteBtn.type = 'button';
-    deleteBg.appendChild(deleteBtn);
-    row.appendChild(deleteBg);
-
-    var content = el('div', 'shopping-row-content');
-
-    content.appendChild(el('span', 'drag-handle', '⠿'));
+    row.appendChild(el('span', 'drag-handle', '⠿'));
 
     var check = el('button', 'todo-check');
     check.type = 'button';
@@ -155,7 +183,7 @@
     check.addEventListener('click', function () {
       self.toggleBought(item);
     });
-    content.appendChild(check);
+    row.appendChild(check);
 
     var nameInput = el('input', 'shopping-name-input');
     nameInput.type = 'text';
@@ -167,7 +195,7 @@
     nameInput.addEventListener('keydown', function (e) {
       if (e.key === 'Enter') { e.preventDefault(); nameInput.blur(); }
     });
-    content.appendChild(nameInput);
+    row.appendChild(nameInput);
 
     var qtyInput = el('input', 'shopping-qty-input');
     qtyInput.type = 'text';
@@ -180,9 +208,16 @@
     qtyInput.addEventListener('keydown', function (e) {
       if (e.key === 'Enter') { e.preventDefault(); qtyInput.blur(); }
     });
-    content.appendChild(qtyInput);
+    row.appendChild(qtyInput);
 
-    row.appendChild(content);
+    var del = el('button', 'shopping-delete', '🗑️');
+    del.type = 'button';
+    del.setAttribute('aria-label', '削除');
+    del.addEventListener('click', function () {
+      self.deleteItem(item);
+    });
+    row.appendChild(del);
+
     return row;
   };
 

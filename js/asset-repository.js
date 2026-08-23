@@ -107,6 +107,19 @@
     }));
   };
 
+  AssetRepository.prototype.subscribeToChanges = function (onChange) {
+    return this.client
+      .channel(ASSETS_TABLE + '_changes')
+      .on('postgres_changes', { event: '*', schema: 'public', table: ASSETS_TABLE }, function (payload) {
+        onChange({
+          eventType: payload.eventType,
+          newItem: payload.new && payload.new.id ? toAsset(payload.new) : null,
+          oldId: payload.old && payload.old.id
+        });
+      })
+      .subscribe();
+  };
+
   global.GoalTracker = global.GoalTracker || {};
   global.GoalTracker.AssetRepository = AssetRepository;
 })(window);

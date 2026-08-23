@@ -73,9 +73,32 @@
     global.GoalTracker.enableDragReorder(this.dom.list, '.drag-handle', function (ids) {
       self.persistOrder(ids);
     });
+    this.repo.subscribeToChanges(function (change) {
+      self.applyRemoteChange(change);
+    });
     return this.loadData().then(function () {
       self.render();
     });
+  };
+
+  AssetApp.prototype.applyRemoteChange = function (change) {
+    var self = this;
+    if (change.eventType === 'DELETE') {
+      this.assets = this.assets.filter(function (a) { return a.id !== change.oldId; });
+      this.render();
+      return;
+    }
+    var idx = this.assets.findIndex(function (a) { return a.id === change.newItem.id; });
+    if (idx >= 0) this.assets[idx] = change.newItem;
+    else this.assets.push(change.newItem);
+
+    // A newly-added asset may reference a symbol we haven't priced yet.
+    var needsQuote = change.newItem.symbol && !(this.quotes && this.quotes[change.newItem.symbol]);
+    if (needsQuote) {
+      this.refreshQuotes().then(function () { self.render(); });
+    } else {
+      this.render();
+    }
   };
 
   AssetApp.prototype.updateVisibilityBtn = function () {

@@ -100,6 +100,19 @@
     }));
   };
 
+  ShoppingRepository.prototype.subscribeToChanges = function (onChange) {
+    return this.client
+      .channel(ITEMS_TABLE + '_changes')
+      .on('postgres_changes', { event: '*', schema: 'public', table: ITEMS_TABLE }, function (payload) {
+        onChange({
+          eventType: payload.eventType,
+          newItem: payload.new && payload.new.id ? toItem(payload.new) : null,
+          oldId: payload.old && payload.old.id
+        });
+      })
+      .subscribe();
+  };
+
   global.GoalTracker = global.GoalTracker || {};
   global.GoalTracker.ShoppingRepository = ShoppingRepository;
 })(window);

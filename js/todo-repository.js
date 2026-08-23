@@ -100,6 +100,23 @@
     }));
   };
 
+  // Realtime: fires onChange({ eventType, newItem, oldId }) whenever any
+  // household member's client writes to this table, so every screen stays
+  // in sync without a manual refresh. newItem is the already-mapped row
+  // (present for INSERT/UPDATE); oldId is the deleted row's id (DELETE).
+  TodoRepository.prototype.subscribeToChanges = function (onChange) {
+    return this.client
+      .channel(TODOS_TABLE + '_changes')
+      .on('postgres_changes', { event: '*', schema: 'public', table: TODOS_TABLE }, function (payload) {
+        onChange({
+          eventType: payload.eventType,
+          newItem: payload.new && payload.new.id ? toTodo(payload.new) : null,
+          oldId: payload.old && payload.old.id
+        });
+      })
+      .subscribe();
+  };
+
   global.GoalTracker = global.GoalTracker || {};
   global.GoalTracker.TodoRepository = TodoRepository;
 })(window);
