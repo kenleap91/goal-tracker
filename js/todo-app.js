@@ -31,6 +31,13 @@
     return mmdd + '(あと' + diff + '日)';
   }
 
+  // Undone items sort to the top (in position order); done items sink
+  // below them (also in position order).
+  function compareTodos(a, b) {
+    if (a.done !== b.done) return a.done ? 1 : -1;
+    return (a.position || 0) - (b.position || 0);
+  }
+
   function TodoApp(repo) {
     this.repo = repo;
     this.todos = [];
@@ -162,10 +169,10 @@
       return;
     }
 
-    var maxPosition = this.todos
+    var minPosition = this.todos
       .filter(function (t) { return t.listType === self.selectedListType; })
-      .reduce(function (max, t) { return Math.max(max, t.position || 0); }, 0);
-    this.repo.addTodo({ title: title, listType: this.selectedListType, position: maxPosition + 10, dueDate: dueDate }).then(function (created) {
+      .reduce(function (min, t) { return Math.min(min, t.position || 0); }, 0);
+    this.repo.addTodo({ title: title, listType: this.selectedListType, position: minPosition - 10, dueDate: dueDate }).then(function (created) {
       self.todos.push(created);
       self.dom.dialog.close();
       self.render();
@@ -246,7 +253,7 @@
     var self = this;
     var visible = this.todos
       .filter(function (t) { return t.listType === self.activeList; })
-      .sort(function (a, b) { return (a.position || 0) - (b.position || 0); });
+      .sort(compareTodos);
     this.dom.list.innerHTML = '';
     this.dom.empty.hidden = visible.length > 0;
     visible.forEach(function (todo) {

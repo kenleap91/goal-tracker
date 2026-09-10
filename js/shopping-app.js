@@ -32,7 +32,8 @@
     this.dom = {
       tabBtns: Array.prototype.slice.call(document.querySelectorAll('#shopping-section .tab-btn')),
       list: document.getElementById('shopping-list'),
-      addInput: document.getElementById('shopping-add-input')
+      addInput: document.getElementById('shopping-add-input'),
+      addBtn: document.getElementById('add-shopping-btn')
     };
   }
 
@@ -111,17 +112,25 @@
       e.preventDefault();
       self.submitAdd();
     });
+
+    // Fixed bottom-right button so "add" stays reachable without scrolling
+    // to the bottom of a long list; it just hands off to the same
+    // always-visible input the Notes-style flow already uses.
+    this.dom.addBtn.addEventListener('click', function () {
+      self.dom.addInput.scrollIntoView({ block: 'center' });
+      self.dom.addInput.focus();
+    });
   };
 
   ShoppingApp.prototype.submitAdd = function () {
     var self = this;
     var name = this.dom.addInput.value.trim();
     if (!name) return;
-    var maxPosition = this.items
+    var minPosition = this.items
       .filter(function (t) { return t.category === self.activeCategory; })
-      .reduce(function (max, t) { return Math.max(max, t.position || 0); }, 0);
+      .reduce(function (min, t) { return Math.min(min, t.position || 0); }, 0);
     this.dom.addInput.value = '';
-    this.repo.addItem({ name: name, category: this.activeCategory, position: maxPosition + 10 }).then(function (created) {
+    this.repo.addItem({ name: name, category: this.activeCategory, position: minPosition - 10 }).then(function (created) {
       self.items.push(created);
       self.render();
       // Keeps focus on the (now-recreated) add row so the user can keep
